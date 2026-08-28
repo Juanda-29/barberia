@@ -465,10 +465,6 @@ function claseCalificacion(calificacion) {
       </section>
 
 
-      <!-- ===============================================
-           SIN REGISTROS
-      ================================================ -->
-
       <section
         v-if="servicios.length === 0"
         class="sin-registros"
@@ -496,9 +492,7 @@ function claseCalificacion(calificacion) {
       </section>
 
 
-      <!-- ===============================================
-           LISTA
-      ================================================ -->
+     
 
       <section
         v-if="servicios.length > 0"
@@ -511,7 +505,7 @@ function claseCalificacion(calificacion) {
           class="tarjeta"
         >
 
-          <!-- CABECERA TARJETA -->
+       
 
           <div class="tarjeta-header">
 
@@ -542,7 +536,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- SERVICIO -->
+        
 
           <div class="servicio-nombre">
 
@@ -565,7 +559,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- FECHA Y HORA -->
+         
 
           <div class="datos">
 
@@ -596,7 +590,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- PAGO -->
+       
 
           <div class="pago">
 
@@ -645,7 +639,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- CALIFICACIÓN -->
+        
 
           <div
             class="calificacion"
@@ -679,7 +673,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- OBSERVACIONES -->
+         
 
           <div
             v-if="servicio.observaciones"
@@ -697,7 +691,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- ACCIONES -->
+       
 
           <div class="acciones">
 
@@ -724,10 +718,7 @@ function claseCalificacion(calificacion) {
     </main>
 
 
-    <!-- ===============================================
-         MODAL
-    ================================================ -->
-
+  
     <div
       v-if="mostrarModal"
       class="modal-fondo"
@@ -767,8 +758,7 @@ function claseCalificacion(calificacion) {
           @submit.prevent="guardarServicio"
         >
 
-          <!-- CLIENTE -->
-
+        
           <div class="campo">
 
             <label>
@@ -784,7 +774,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- SERVICIO Y BARBERO -->
+          
 
           <div class="fila">
 
@@ -899,7 +889,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- PAGO -->
+        
 
           <div class="fila">
 
@@ -965,7 +955,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- CALIFICACIÓN -->
+        
 
           <div class="campo">
 
@@ -1009,8 +999,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- OBSERVACIONES -->
-
+        
           <div class="campo">
 
             <label>
@@ -1026,8 +1015,6 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- ERROR -->
-
           <div
             v-show="errorFormulario"
             class="mensaje-error"
@@ -1036,8 +1023,7 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-          <!-- BOTONES -->
-
+        
           <div class="botones-formulario">
 
             <button
@@ -1073,9 +1059,7 @@ function claseCalificacion(calificacion) {
 
 <style scoped>
 
-/* ======================================================
-   GENERAL
-====================================================== */
+
 
 * {
   box-sizing: border-box;
@@ -1099,9 +1083,6 @@ body {
 }
 
 
-/* ======================================================
-   HEADER
-====================================================== */
 
 .header {
   width: 100%;
@@ -1216,9 +1197,6 @@ body {
 }
 
 
-/* ======================================================
-   CONTENEDOR
-====================================================== */
 
 .contenedor {
   width: 92%;
@@ -1228,10 +1206,6 @@ body {
   margin: 30px auto 60px;
 }
 
-
-/* ======================================================
-   RESUMEN
-====================================================== */
 
 .resumen {
   display: grid;
@@ -1287,9 +1261,6 @@ body {
 }
 
 
-/* ======================================================
-   TÍTULO
-====================================================== */
 
 .titulo-lista {
   display: flex;
@@ -1330,9 +1301,7 @@ body {
 }
 
 
-/* ======================================================
-   SIN REGISTROS
-====================================================== */
+
 
 .sin-registros {
   background: white;
@@ -1378,9 +1347,7 @@ body {
 }
 
 
-/* ======================================================
-   LISTA
-====================================================== */
+
 
 .lista {
   display: grid;
@@ -1392,9 +1359,6 @@ body {
 }
 
 
-/* ======================================================
-   TARJETA
-====================================================== */
 
 .tarjeta {
   background: white;
@@ -1416,9 +1380,7 @@ body {
 }
 
 
-/* ======================================================
-   CABECERA TARJETA
-====================================================== */
+
 
 .tarjeta-header {
   display: flex;
@@ -1484,9 +1446,6 @@ body {
 }
 
 
-/* ======================================================
-   SERVICIO
-====================================================== */
 
 .servicio-nombre {
   display: flex;
@@ -1534,9 +1493,7 @@ body {
 }
 
 
-/* ======================================================
-   DATOS
-====================================================== */
+
 
 .datos {
   display: grid;
@@ -1552,10 +1509,6 @@ body {
   font-size: 12px;
 }
 
-
-/* ======================================================
-   PAGO
-====================================================== */
 
 .pago {
   display: flex;
@@ -1635,9 +1588,6 @@ body {
 }
 
 
-/* ======================================================
-   CALIFICACIÓN
-====================================================== */
 
 .calificacion {
   display: flex;
@@ -1670,9 +1620,6 @@ body {
 }
 
 
-/* ======================================================
-   OBSERVACIÓN
-====================================================== */
 
 .observacion {
   background: #f7f5f1;
@@ -1699,9 +1646,6 @@ body {
 }
 
 
-/* ======================================================
-   ACCIONES
-====================================================== */
 
 .acciones {
   display: grid;
@@ -1741,9 +1685,7 @@ body {
 }
 
 
-/* ======================================================
-   MODAL
-====================================================== */
+
 
 .modal-fondo {
   position: fixed;
@@ -1817,9 +1759,7 @@ body {
 }
 
 
-/* ======================================================
-   FORMULARIO
-====================================================== */
+
 
 .formulario {
   padding: 20px;
@@ -1894,9 +1834,6 @@ body {
 }
 
 
-/* ======================================================
-   ERROR
-====================================================== */
 
 .mensaje-error {
   padding: 10px;
@@ -1913,9 +1850,7 @@ body {
 }
 
 
-/* ======================================================
-   BOTONES FORMULARIO
-====================================================== */
+
 
 .botones-formulario {
   display: grid;
@@ -1958,106 +1893,5 @@ body {
   background: #3b3b3b;
 }
 
-
-/* ======================================================
-   RESPONSIVE
-====================================================== */
-
-@media (max-width: 950px) {
-
-  .lista {
-    grid-template-columns:
-      repeat(2, 1fr);
-  }
-
-  .resumen {
-    grid-template-columns:
-      repeat(3, 1fr);
-  }
-
-  .resumen-item:nth-child(3) {
-    border-right: none;
-  }
-
-}
-
-
-@media (max-width: 650px) {
-
-  .header-imagen {
-    height: 260px;
-  }
-
-  .header-texto {
-    padding: 25px;
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    justify-content: center;
-
-    gap: 25px;
-  }
-
-  .titulo h1 {
-    font-size: 23px;
-  }
-
-  .boton-nuevo {
-    width: 100%;
-  }
-
-  .resumen {
-    grid-template-columns:
-      repeat(2, 1fr);
-  }
-
-  .resumen-item {
-    border-bottom: 1px solid #e5e1da;
-  }
-
-  .lista {
-    grid-template-columns: 1fr;
-  }
-
-  .titulo-lista {
-    align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 10px;
-  }
-
-}
-
-
-@media (max-width: 480px) {
-
-  .contenedor {
-    width: 94%;
-  }
-
-  .fila {
-    grid-template-columns: 1fr;
-  }
-
-  .resumen-numero {
-    font-size: 20px;
-  }
-
-  .resumen-numero.ventas {
-    font-size: 15px;
-  }
-
-  .modal-fondo {
-    padding: 10px;
-  }
-
-  .botones-formulario {
-    grid-template-columns: 1fr;
-  }
-
-}
 
 </style>
