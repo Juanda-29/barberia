@@ -1,31 +1,19 @@
+ORIGINAL
+
+
+
+
 <script setup>
 import { ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-
-const mostrarModal = ref(false)
-
-const servicios = useLocalStorage('servicios-barberia', [])
-
-const form = ref({
-  cliente: '',
-  servicio: '',
-  barbero: '',
-  fecha: '',
-  hora: '',
-  precio: '',
-  metodo: '',
-  estado: '',
-  calificacion: '',
-  observaciones: ''
-})
-
 const tiposServicio = [
   'Corte clásico',
   'Corte moderno',
   'Barba',
   'Corte + barba',
   'Cejas',
-  'Tinte'
+  'Tinte',
+  'Otro'
 ]
 
 const barberos = [
@@ -34,55 +22,304 @@ const barberos = [
   'Andrés'
 ]
 
-function abrirModal() {
-  mostrarModal.value = true
-}
+const metodosPago = [
+  'Efectivo',
+  'Transferencia',
+  'Tarjeta'
+]
 
-function cerrarModal() {
-  mostrarModal.value = false
-}
+const estadosPago = [
+  'Pagado',
+  'Pendiente',
+  'Fiado'
+]
 
-function guardarServicio() {
+const servicios = useLocalStorage(
+  'servicios-barberia',
+  []
+)
 
-  if (
-    !form.value.cliente ||
-    !form.value.servicio ||
-    !form.value.barbero
-  ) {
-    alert('Complete los campos principales')
-    return
-  }
+const mostrarModal = ref(false)
+const editando = ref(false)
+const idEditando = ref(null)
+const errorFormulario = ref('')
 
-  const nuevoServicio = {
-    id: Date.now(),
-    cliente: form.value.cliente,
-    servicio: form.value.servicio,
-    barbero: form.value.barbero,
-    fecha: form.value.fecha,
-    hora: form.value.hora,
-    precio: form.value.precio,
-    metodo: form.value.metodo,
-    estado: form.value.estado,
-    calificacion: form.value.calificacion,
-    observaciones: form.value.observaciones
-  }
-
-  servicios.value.push(nuevoServicio)
-
-  form.value = {
+function formularioVacio() {
+  return {
     cliente: '',
-    servicio: '',
+    tipoServicio: '',
     barbero: '',
     fecha: '',
     hora: '',
     precio: '',
-    metodo: '',
-    estado: '',
+    metodoPago: '',
+    estadoPago: '',
     calificacion: '',
     observaciones: ''
   }
+}
+
+const form = ref(formularioVacio())
+
+
+function abrirModalNuevo() {
+  form.value = formularioVacio()
+  editando.value = false
+  idEditando.value = null
+  errorFormulario.value = ''
+  mostrarModal.value = true
+}
+
+
+function editarServicio(servicio) {
+  form.value = {
+    cliente: servicio.cliente,
+    tipoServicio: servicio.tipoServicio,
+    barbero: servicio.barbero,
+    fecha: servicio.fecha,
+    hora: servicio.hora,
+    precio: servicio.precio,
+    metodoPago: servicio.metodoPago,
+    estadoPago: servicio.estadoPago,
+    calificacion: servicio.calificacion,
+    observaciones: servicio.observaciones
+  }
+
+  idEditando.value = servicio.id
+  editando.value = true
+  errorFormulario.value = ''
+  mostrarModal.value = true
+}
+
+
+function validarFormulario() {
+
+  if (!form.value.cliente.trim()) {
+    return 'Ingrese el nombre del cliente.'
+  }
+
+  if (!form.value.tipoServicio) {
+    return 'Seleccione el tipo de servicio.'
+  }
+
+  if (!form.value.barbero) {
+    return 'Seleccione el barbero.'
+  }
+
+  if (!form.value.fecha) {
+    return 'Seleccione la fecha.'
+  }
+
+  if (!form.value.hora) {
+    return 'Seleccione la hora.'
+  }
+
+  if (!form.value.precio || Number(form.value.precio) <= 0) {
+    return 'Ingrese un precio válido.'
+  }
+
+  if (!form.value.metodoPago) {
+    return 'Seleccione el método de pago.'
+  }
+
+  if (!form.value.estadoPago) {
+    return 'Seleccione el estado del pago.'
+  }
+
+  if (
+    !form.value.calificacion ||
+    Number(form.value.calificacion) < 1 ||
+    Number(form.value.calificacion) > 5
+  ) {
+    return 'Seleccione una calificación entre 1 y 5.'
+  }
+
+  return ''
+}
+
+
+
+function guardarServicio() {
+
+  const error = validarFormulario()
+
+  if (error) {
+    errorFormulario.value = error
+    return
+  }
+
+  if (editando.value) {
+
+    const posicion = servicios.value.findIndex(
+      servicio => servicio.id === idEditando.value
+    )
+
+    if (posicion !== -1) {
+
+      servicios.value[posicion] = {
+        id: idEditando.value,
+        cliente: form.value.cliente,
+        tipoServicio: form.value.tipoServicio,
+        barbero: form.value.barbero,
+        fecha: form.value.fecha,
+        hora: form.value.hora,
+        precio: Number(form.value.precio),
+        metodoPago: form.value.metodoPago,
+        estadoPago: form.value.estadoPago,
+        calificacion: Number(form.value.calificacion),
+        observaciones: form.value.observaciones
+      }
+    }
+
+  } else {
+
+    const nuevoServicio = {
+      id: Date.now(),
+      cliente: form.value.cliente,
+      tipoServicio: form.value.tipoServicio,
+      barbero: form.value.barbero,
+      fecha: form.value.fecha,
+      hora: form.value.hora,
+      precio: Number(form.value.precio),
+      metodoPago: form.value.metodoPago,
+      estadoPago: form.value.estadoPago,
+      calificacion: Number(form.value.calificacion),
+      observaciones: form.value.observaciones
+    }
+
+    servicios.value.push(nuevoServicio)
+  }
 
   cerrarModal()
+}
+
+
+
+function eliminarServicio(id) {
+
+  const confirmar = confirm(
+    '¿Está seguro de eliminar este servicio?'
+  )
+
+  if (confirmar) {
+
+    servicios.value = servicios.value.filter(
+      servicio => servicio.id !== id
+    )
+  }
+}
+
+
+function cerrarModal() {
+
+  mostrarModal.value = false
+  editando.value = false
+  idEditando.value = null
+  errorFormulario.value = ''
+  form.value = formularioVacio()
+}
+
+function cancelar() {
+  cerrarModal()
+}
+
+
+
+function totalServicios() {
+  return servicios.value.length
+}
+
+function contarPagados() {
+
+  return servicios.value.filter(
+    servicio => servicio.estadoPago === 'Pagado'
+  ).length
+}
+
+function contarPendientes() {
+
+  return servicios.value.filter(
+    servicio => servicio.estadoPago === 'Pendiente'
+  ).length
+}
+
+function contarFiados() {
+
+  return servicios.value.filter(
+    servicio => servicio.estadoPago === 'Fiado'
+  ).length
+}
+
+function totalVentas() {
+
+  let total = 0
+
+  servicios.value.forEach(servicio => {
+
+    if (servicio.estadoPago === 'Pagado') {
+      total += Number(servicio.precio)
+    }
+
+  })
+
+  return total
+}
+
+
+
+function generarEstrellas(calificacion) {
+
+  let estrellas = ''
+
+  for (let i = 1; i <= 5; i++) {
+
+    if (i <= Number(calificacion)) {
+      estrellas += '★'
+    } else {
+      estrellas += '☆'
+    }
+  }
+
+  return estrellas
+}
+
+function iconoPago(metodo) {
+
+  if (metodo === 'Efectivo') {
+    return 'E'
+  }
+
+  if (metodo === 'Transferencia') {
+    return 'T'
+  }
+
+  return 'C'
+}
+
+function clasePago(estado) {
+
+  if (estado === 'Pagado') {
+    return 'pago-ok'
+  }
+
+  if (estado === 'Pendiente') {
+    return 'pago-pendiente'
+  }
+
+  return 'pago-fiado'
+}
+
+function claseCalificacion(calificacion) {
+
+  if (Number(calificacion) <= 2) {
+    return 'calificacion-baja'
+  }
+
+  if (Number(calificacion) === 3) {
+    return 'calificacion-media'
+  }
+
+  return 'calificacion-alta'
 }
 </script>
 
@@ -91,35 +328,38 @@ function guardarServicio() {
 
   <div class="pagina">
 
-
     <header class="header">
 
-      <div class="imagen-header">
+      <div class="header-imagen">
 
         <img
           src="https://www.beautymarket.es/imagen/min35798.jpg"
           alt="Barbería"
-        >
+        />
 
-        <div class="fondo"></div>
+        <div class="imagen-overlay"></div>
 
-        <div class="contenido-header">
+        <div class="header-texto">
 
-         <div> 
- 
-            <h1> 
-              <span>🪒</span> Barbería Don Ramiro 
-            </h1> 
- 
-            <p> 
-              Registro de servicios 
-            </p> 
- 
-          </div> 
+          <div class="titulo">
+            
+            <div>
+
+              <h1>
+              ✂ BARBERIA DON RAMIRO
+              </h1>
+
+              <p>
+                Registro de servicios
+              </p>
+
+            </div>
+
+          </div>
 
           <button
-            class="btn-nuevo"
-            @click="abrirModal"
+            class="boton-nuevo"
+            @click="abrirModalNuevo"
           >
             + Nuevo servicio
           </button>
@@ -131,28 +371,116 @@ function guardarServicio() {
     </header>
 
 
+
     <main class="contenedor">
 
-      <section class="introduccion">
+      <section class="resumen">
 
-        <h2>
-          Servicios registrados
-        </h2>
+        <div class="resumen-item">
 
-        <p>
-          En esta sección se pueden consultar los servicios realizados.
-        </p>
+          <span class="resumen-numero">
+            {{ totalServicios() }}
+          </span>
+
+          <span class="resumen-texto">
+            SERVICIOS
+          </span>
+
+        </div>
+
+
+        <div class="resumen-item">
+
+          <span class="resumen-numero">
+            {{ contarPagados() }}
+          </span>
+
+          <span class="resumen-texto">
+           PAGADOS
+          </span>
+
+        </div>
+
+
+        <div class="resumen-item">
+
+          <span class="resumen-numero">
+            {{ contarPendientes() }}
+          </span>
+
+          <span class="resumen-texto">
+            PENDIENTES
+          </span>
+
+        </div>
+
+
+        <div class="resumen-item">
+
+          <span class="resumen-numero">
+            {{ contarFiados() }}
+          </span>
+
+          <span class="resumen-texto">
+            FIADOS
+          </span>
+
+        </div>
+
+
+        <div class="resumen-item">
+
+          <span class="resumen-numero ventas">
+            ${{ totalVentas().toLocaleString('es-CO') }}
+          </span>
+
+          <span class="resumen-texto">
+            VENTAS PAGADAS
+          </span>
+
+        </div>
 
       </section>
 
 
+
+
+      <section class="titulo-lista">
+
+        <div>
+
+          <h2>
+            Servicios registrados
+          </h2>
+
+          <p>
+            Aquí puedes consultar y administrar los servicios.
+          </p>
+
+        </div>
+
+        <span
+          v-if="servicios.length > 0"
+          class="cantidad"
+        >
+          {{ servicios.length }}
+          registrados
+        </span>
+
+      </section>
+
+
+      <!-- ===============================================
+           SIN REGISTROS
+      ================================================ -->
+
       <section
         v-if="servicios.length === 0"
-        class="sin-datos"
+        class="sin-registros"
       >
 
-        <div class="icono">
-          
+        <div class="icono-vacio">
+          ✂
         </div>
 
         <h3>
@@ -160,18 +488,22 @@ function guardarServicio() {
         </h3>
 
         <p>
-          Agregue el primer servicio para comenzar.
+          Agrega el primer servicio para comenzar.
         </p>
 
         <button
-          class="btn-nuevo"
-          @click="abrirModal"
+          class="boton-nuevo"
+          @click="abrirModalNuevo"
         >
-          + Registrar servicio
+          + Agregar servicio
         </button>
 
       </section>
 
+
+      <!-- ===============================================
+           LISTA
+      ================================================ -->
 
       <section
         v-if="servicios.length > 0"
@@ -184,47 +516,69 @@ function guardarServicio() {
           class="tarjeta"
         >
 
+          <!-- CABECERA TARJETA -->
+
           <div class="tarjeta-header">
 
-            <div>
+            <div class="cliente">
 
-              <h3>
-                {{ servicio.cliente }}
-              </h3>
+              <div class="inicial">
+                {{ servicio.cliente.charAt(0).toUpperCase() }}
+              </div>
 
-              <p>
-                {{ servicio.barbero }}
-              </p>
+              <div>
+
+                <h3>
+                  {{ servicio.cliente }}
+                </h3>
+
+                <p>
+                  Atendido por {{ servicio.barbero }}
+                </p>
+
+              </div>
 
             </div>
 
-            <strong>
-              ${{ servicio.precio }}
+            <strong class="precio">
+              ${{ Number(servicio.precio).toLocaleString('es-CO') }}
             </strong>
 
           </div>
 
 
-          <div class="dato">
+          <!-- SERVICIO -->
 
-            <span>
-              Servicio
+          <div class="servicio-nombre">
+
+            <span class="mini-icono">
+              ✂
             </span>
 
-            <strong>
-              {{ servicio.servicio }}
-            </strong>
+            <div>
+
+              <small>
+                SERVICIO
+              </small>
+
+              <strong>
+                {{ servicio.tipoServicio }}
+              </strong>
+
+            </div>
 
           </div>
 
+
+          <!-- FECHA Y HORA -->
 
           <div class="datos">
 
             <div>
 
-              <span>
-                Fecha
-              </span>
+              <small>
+                FECHA
+              </small>
 
               <strong>
                 {{ servicio.fecha }}
@@ -234,9 +588,9 @@ function guardarServicio() {
 
             <div>
 
-              <span>
-                Hora
-              </span>
+              <small>
+                HORA
+              </small>
 
               <strong>
                 {{ servicio.hora }}
@@ -247,59 +601,122 @@ function guardarServicio() {
           </div>
 
 
-          <div
-            v-if="servicio.metodo"
-            class="dato"
-          >
+          <!-- PAGO -->
 
-            <span>
-              Método de pago
+          <div class="pago">
+
+            <div class="metodo">
+
+              <span class="circulo-pago">
+                {{ iconoPago(servicio.metodoPago) }}
+              </span>
+
+              <div>
+
+                <small>
+                  MÉTODO
+                </small>
+
+                <strong>
+                  {{ servicio.metodoPago }}
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            <span
+              class="estado"
+              :class="clasePago(servicio.estadoPago)"
+            >
+
+              <span v-if="servicio.estadoPago === 'Pagado'">
+                ✓ Pagado
+              </span>
+
+              <span
+                v-else-if="servicio.estadoPago === 'Pendiente'"
+              >
+                ! Pendiente
+              </span>
+
+              <span v-else>
+                $ Fiado
+              </span>
+
             </span>
 
-            <strong>
-              {{ servicio.metodo }}
-            </strong>
-
           </div>
 
 
-          <div
-            v-if="servicio.estado"
-            class="estado"
-          >
-
-            {{ servicio.estado }}
-
-          </div>
-
+          <!-- CALIFICACIÓN -->
 
           <div
-            v-if="servicio.calificacion"
             class="calificacion"
+            :class="claseCalificacion(servicio.calificacion)"
           >
 
-            ★★★★★
+            <span class="estrellas">
+              {{ generarEstrellas(servicio.calificacion) }}
+            </span>
+
+            <span>
+
+              <span
+                v-if="servicio.calificacion <= 2"
+              >
+                Baja
+              </span>
+
+              <span
+                v-else-if="servicio.calificacion === 3"
+              >
+                Regular
+              </span>
+
+              <span v-else>
+                Buena
+              </span>
+
+            </span>
 
           </div>
 
+
+          <!-- OBSERVACIONES -->
 
           <div
             v-if="servicio.observaciones"
             class="observacion"
           >
 
-            {{ servicio.observaciones }}
+            <strong>
+              Observación:
+            </strong>
+
+            <p>
+              {{ servicio.observaciones }}
+            </p>
 
           </div>
 
 
+          <!-- ACCIONES -->
+
           <div class="acciones">
 
-            <button class="btn-editar">
+            <button
+              class="boton-editar"
+              @click="editarServicio(servicio)"
+            >
               Editar
             </button>
 
-            <button class="btn-eliminar">
+            <button
+              class="boton-eliminar"
+              @click="eliminarServicio(servicio.id)"
+            >
               Eliminar
             </button>
 
@@ -311,7 +728,11 @@ function guardarServicio() {
 
     </main>
 
-    
+
+    <!-- ===============================================
+         MODAL
+    ================================================ -->
+
     <div
       v-if="mostrarModal"
       class="modal-fondo"
@@ -324,18 +745,21 @@ function guardarServicio() {
           <div>
 
             <h2>
-              Nuevo servicio
+              {{ editando
+                ? 'Editar servicio'
+                : 'Nuevo servicio'
+              }}
             </h2>
 
             <p>
-              Complete los datos del servicio.
+              Complete la información del servicio.
             </p>
 
           </div>
 
           <button
             class="cerrar"
-            @click="cerrarModal"
+            @click="cancelar"
           >
             ×
           </button>
@@ -348,6 +772,8 @@ function guardarServicio() {
           @submit.prevent="guardarServicio"
         >
 
+          <!-- CLIENTE -->
+
           <div class="campo">
 
             <label>
@@ -357,11 +783,13 @@ function guardarServicio() {
             <input
               v-model="form.cliente"
               type="text"
-              placeholder="Ej. Juan castro"
-            >
+              placeholder="Ej. Juan Pérez"
+            />
 
           </div>
 
+
+          <!-- SERVICIO Y BARBERO -->
 
           <div class="fila">
 
@@ -372,10 +800,13 @@ function guardarServicio() {
               </label>
 
               <select
-                v-model="form.servicio"
+                v-model="form.tipoServicio"
               >
 
-                <option value="">
+                <option
+                  value=""
+                  disabled
+                >
                   Seleccione
                 </option>
 
@@ -402,7 +833,10 @@ function guardarServicio() {
                 v-model="form.barbero"
               >
 
-                <option value="">
+                <option
+                  value=""
+                  disabled
+                >
                   Seleccione
                 </option>
 
@@ -421,6 +855,7 @@ function guardarServicio() {
           </div>
 
 
+
           <div class="fila">
 
             <div class="campo">
@@ -432,7 +867,7 @@ function guardarServicio() {
               <input
                 v-model="form.fecha"
                 type="date"
-              >
+              />
 
             </div>
 
@@ -446,7 +881,7 @@ function guardarServicio() {
               <input
                 v-model="form.hora"
                 type="time"
-              >
+              />
 
             </div>
 
@@ -462,11 +897,14 @@ function guardarServicio() {
             <input
               v-model="form.precio"
               type="number"
-              placeholder="20.000"
-            >
+              min="1"
+              placeholder="20000"
+            />
 
           </div>
 
+
+          <!-- PAGO -->
 
           <div class="fila">
 
@@ -477,23 +915,22 @@ function guardarServicio() {
               </label>
 
               <select
-                v-model="form.metodo"
+                v-model="form.metodoPago"
               >
 
-                <option value="">
+                <option
+                  value=""
+                  disabled
+                >
                   Seleccione
                 </option>
 
-                <option>
-                  Efectivo
-                </option>
-
-                <option>
-                  Transferencia
-                </option>
-
-                <option>
-                  Tarjeta
+                <option
+                  v-for="metodo in metodosPago"
+                  :key="metodo"
+                  :value="metodo"
+                >
+                  {{ metodo }}
                 </option>
 
               </select>
@@ -508,23 +945,22 @@ function guardarServicio() {
               </label>
 
               <select
-                v-model="form.estado"
+                v-model="form.estadoPago"
               >
 
-                <option value="">
+                <option
+                  value=""
+                  disabled
+                >
                   Seleccione
                 </option>
 
-                <option>
-                  Pagado
-                </option>
-
-                <option>
-                  Pendiente
-                </option>
-
-                <option>
-                  Fiado
+                <option
+                  v-for="estado in estadosPago"
+                  :key="estado"
+                  :value="estado"
+                >
+                  {{ estado }}
                 </option>
 
               </select>
@@ -533,6 +969,8 @@ function guardarServicio() {
 
           </div>
 
+
+          <!-- CALIFICACIÓN -->
 
           <div class="campo">
 
@@ -544,7 +982,10 @@ function guardarServicio() {
               v-model="form.calificacion"
             >
 
-              <option value="">
+              <option
+                value=""
+                disabled
+              >
                 Seleccione
               </option>
 
@@ -573,35 +1014,53 @@ function guardarServicio() {
           </div>
 
 
+          <!-- OBSERVACIONES -->
+
           <div class="campo">
 
             <label>
               Observaciones
+              <span>(opcional)</span>
             </label>
 
             <textarea
               v-model="form.observaciones"
-              placeholder="Escribe una observacion..."
+              placeholder="Escriba una observación..."
             ></textarea>
 
           </div>
 
 
-          <div class="botones">
+          <!-- ERROR -->
+
+          <div
+            v-show="errorFormulario"
+            class="mensaje-error"
+          >
+            {{ errorFormulario }}
+          </div>
+
+
+          <!-- BOTONES -->
+
+          <div class="botones-formulario">
 
             <button
               type="button"
-              class="btn-cancelar"
-              @click="cerrarModal"
+              class="boton-cancelar"
+              @click="cancelar"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              class="btn-guardar"
+              class="boton-guardar"
             >
-              Guardar
+              {{ editando
+                ? 'Guardar cambios'
+                : 'Guardar servicio'
+              }}
             </button>
 
           </div>
@@ -619,8 +1078,16 @@ function guardarServicio() {
 
 <style scoped>
 
+/* ======================================================
+   GENERAL
+====================================================== */
+
 * {
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
 }
 
 .pagina {
@@ -630,47 +1097,52 @@ function guardarServicio() {
 
   color: #292929;
 
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
 }
 
 
-/* HEADER */
+/* ======================================================
+   HEADER
+====================================================== */
 
-.imagen-header {
- 
+.header {
+  width: 100%;
+}
 
-  height: 320px;
+.header-imagen {
+  height: 300px;
 
   position: relative;
 
   overflow: hidden;
 }
 
-.imagen-header img {
+.header-imagen img {
   width: 100%;
   height: 100%;
 
   object-fit: cover;
 }
 
-.fondo {
+.imagen-overlay {
   position: absolute;
 
   inset: 0;
 
-  background: rgba(0, 0, 0, .55);
+  background: rgba(0, 0, 0, .58);
 }
 
-.contenido-header {
+.header-texto {
   position: absolute;
 
-  inset: 0;
+  top: 0;
+  left: 0;
 
-  max-width: 1100px;
-
-  margin: auto;
-
-  padding: 35px;
+  width: 100%;
+  height: 100%;
 
   display: flex;
 
@@ -678,67 +1150,169 @@ function guardarServicio() {
 
   justify-content: space-between;
 
-  color: white;
+  padding: 40px;
+
+  max-width: 1300px;
+
+  margin: auto;
+
+  right: 0;
 }
 
-.contenido-header h1 {
+.titulo {
+  display: flex;
+
+  align-items: center;
+
+  gap: 35px;
+
+  color: rgb(252, 250, 250);
+
+ 
+}
+
+
+.logo-simple {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #c59a54;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 25px;
+  color: #c59a54;
+}
+
+.titulo h1 {
   margin: 0;
 
-  font-size: 29px;
+  font-size: 30px;
 }
 
-.contenido-header p {
-  margin-top: 8px;
+.titulo p {
+  margin: 6px 0 0;
 
   color: #ddd;
+
+  font-size: 15px;
 }
 
-
-/* BOTON */
-
-.btn-nuevo {
-  padding: 11px 17px;
-
+.boton-nuevo {
   border: none;
 
-  border-radius: 5px;
+  background: #c59a54;
 
-  background: #c39a55;
+  color: #171717;
 
-  color: #1e1e1e;
+  padding: 12px 18px;
+
+  border-radius: 6px;
+
+  font-size: 14px;
 
   font-weight: bold;
 
   cursor: pointer;
 }
 
-.btn-nuevo:hover {
-  background: #d2aa68;
+.boton-nuevo:hover {
+  background: #d5aa65;
 }
 
 
-/* CONTENEDOR */
+/* ======================================================
+   CONTENEDOR
+====================================================== */
 
 .contenedor {
   width: 92%;
 
-  max-width: 1100px;
+  max-width: 1200px;
 
-  margin: 35px auto;
+  margin: 30px auto 60px;
 }
 
 
-/* INTRODUCCION */
+/* ======================================================
+   RESUMEN
+====================================================== */
 
-.introduccion {
-  margin-bottom: 22px;
+.resumen {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  background: white;
+
+  border: 1px solid #ddd8cf;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  margin-bottom: 35px;
 }
 
-.introduccion h2 {
+.resumen-item {
+  padding: 20px;
+
+  text-align: center;
+
+  border-right: 1px solid #e5e1da;
+}
+
+.resumen-item:last-child {
+  border-right: none;
+}
+
+.resumen-numero {
+  display: block;
+
+  color: #252525;
+
+  font-size: 23px;
+
+  font-weight: bold;
+
   margin-bottom: 5px;
 }
 
-.introduccion p {
+.resumen-numero.ventas {
+  color: #a67a32;
+
+  font-size: 18px;
+}
+
+.resumen-texto {
+  color: #777;
+
+  font-size: 12px;
+}
+
+
+/* ======================================================
+   TÍTULO
+====================================================== */
+
+.titulo-lista {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.titulo-lista h2 {
+  margin: 0 0 5px;
+
+  font-size: 24px;
+}
+
+.titulo-lista p {
   margin: 0;
 
   color: #777;
@@ -746,26 +1320,42 @@ function guardarServicio() {
   font-size: 14px;
 }
 
+.cantidad {
+  background: white;
 
-/* SIN DATOS */
+  border: 1px solid #ddd8cf;
 
-.sin-datos {
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  color: #777;
+
+  font-size: 12px;
+}
+
+
+/* ======================================================
+   SIN REGISTROS
+====================================================== */
+
+.sin-registros {
   background: white;
 
   border: 1px solid #ddd8cf;
 
   border-radius: 8px;
 
-  padding: 55px 20px;
+  padding: 60px 20px;
 
   text-align: center;
 }
 
-.icono {
-  width: 55px;
-  height: 55px;
+.icono-vacio {
+  width: 60px;
+  height: 60px;
 
-  margin: auto;
+  margin: 0 auto 15px;
 
   display: flex;
 
@@ -775,36 +1365,41 @@ function guardarServicio() {
 
   border-radius: 50%;
 
-  background: #eee7dc;
+  background: #f0e8da;
 
-  color: #a47b38;
+  color: #a67a32;
 
-  font-size: 24px;
+  font-size: 25px;
 }
 
-.sin-datos h3 {
-  margin-bottom: 5px;
+.sin-registros h3 {
+  margin: 0 0 7px;
 }
 
-.sin-datos p {
+.sin-registros p {
   color: #777;
 
-  margin-bottom: 20px;
+  margin: 0 0 20px;
 }
 
 
-/* LISTA */
+/* ======================================================
+   LISTA
+====================================================== */
 
 .lista {
   display: grid;
 
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns:
+    repeat(3, 1fr);
 
   gap: 18px;
 }
 
 
-/* TARJETA */
+/* ======================================================
+   TARJETA
+====================================================== */
 
 .tarjeta {
   background: white;
@@ -814,60 +1409,139 @@ function guardarServicio() {
   border-radius: 8px;
 
   padding: 18px;
+
+  transition: .2s;
 }
+
+.tarjeta:hover {
+  border-color: #c59a54;
+
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, .06);
+}
+
+
+/* ======================================================
+   CABECERA TARJETA
+====================================================== */
 
 .tarjeta-header {
   display: flex;
 
+  align-items: center;
+
   justify-content: space-between;
+
+  gap: 10px;
+
+  padding-bottom: 15px;
+
+  border-bottom: 1px solid #eeeae3;
+}
+
+.cliente {
+  display: flex;
 
   align-items: center;
 
-  padding-bottom: 14px;
-
-  border-bottom: 1px solid #eee;
+  gap: 10px;
 }
 
-.tarjeta-header h3 {
+.inicial {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #282828;
+
+  color: #c59a54;
+
+  font-weight: bold;
+}
+
+.cliente h3 {
   margin: 0;
 
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.tarjeta-header p {
-  margin: 4px 0;
+.cliente p {
+  margin: 4px 0 0;
 
   color: #888;
 
   font-size: 11px;
 }
 
-.tarjeta-header strong {
-  color: #a47835;
+.precio {
+  color: #a67a32;
+
+  font-size: 16px;
+
+  white-space: nowrap;
 }
 
 
-/* DATOS */
+/* ======================================================
+   SERVICIO
+====================================================== */
 
-.dato {
-  padding: 13px 0;
+.servicio-nombre {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 14px 0;
 }
 
-.dato span,
-.datos span {
+.mini-icono {
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #f3eee6;
+
+  color: #a67a32;
+
+  border-radius: 6px;
+}
+
+.servicio-nombre small,
+.datos small,
+.metodo small {
   display: block;
 
   color: #999;
 
   font-size: 9px;
 
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+
+  letter-spacing: .5px;
 }
 
-.dato strong,
-.datos strong {
-  font-size: 12px;
+.servicio-nombre strong {
+  font-size: 13px;
 }
+
+
+/* ======================================================
+   DATOS
+====================================================== */
 
 .datos {
   display: grid;
@@ -876,56 +1550,163 @@ function guardarServicio() {
 
   gap: 10px;
 
-  padding-bottom: 12px;
+  padding-bottom: 14px;
+}
+
+.datos strong {
+  font-size: 12px;
 }
 
 
-/* ESTADO */
+/* ======================================================
+   PAGO
+====================================================== */
+
+.pago {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 13px 0;
+
+  border-top: 1px solid #eeeae3;
+
+  border-bottom: 1px solid #eeeae3;
+}
+
+.metodo {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+.circulo-pago {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #292929;
+
+  color: #c59a54;
+
+  font-size: 11px;
+
+  font-weight: bold;
+}
+
+.metodo strong {
+  font-size: 11px;
+}
 
 .estado {
-  display: inline-block;
-
   padding: 5px 8px;
-
-  background: #eee;
 
   border-radius: 4px;
 
   font-size: 10px;
 
-  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.pago-ok {
+  background: #e5f3e7;
+
+  color: #3f814b;
+}
+
+.pago-pendiente {
+  background: #fff1d9;
+
+  color: #9a6b24;
+}
+
+.pago-fiado {
+  background: #f8e4e4;
+
+  color: #9c4b4b;
 }
 
 
-/* CALIFICACION */
+/* ======================================================
+   CALIFICACIÓN
+====================================================== */
 
 .calificacion {
-  color: #c39a55;
+  display: flex;
 
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 12px 0;
+
+  font-size: 11px;
+}
+
+.estrellas {
   font-size: 15px;
 
-  padding: 5px 0 12px;
+  letter-spacing: 1px;
+}
+
+.calificacion-alta .estrellas {
+  color: #c59a54;
+}
+
+.calificacion-media .estrellas {
+  color: #c28a35;
+}
+
+.calificacion-baja .estrellas {
+  color: #b65353;
 }
 
 
-/* OBSERVACION */
+/* ======================================================
+   OBSERVACIÓN
+====================================================== */
 
 .observacion {
-  background: #f5f3ef;
+  background: #f7f5f1;
+
+  border-left: 3px solid #c59a54;
 
   padding: 9px;
 
-  border-left: 3px solid #c39a55;
-
-  color: #666;
+  margin-bottom: 13px;
 
   font-size: 11px;
+}
 
-  margin-bottom: 12px;
+.observacion strong {
+  font-size: 10px;
+}
+
+.observacion p {
+  margin: 4px 0 0;
+
+  color: #777;
+
+  line-height: 1.4;
 }
 
 
-/* ACCIONES */
+/* ======================================================
+   ACCIONES
+====================================================== */
 
 .acciones {
   display: grid;
@@ -933,24 +1714,22 @@ function guardarServicio() {
   grid-template-columns: 1fr 1fr;
 
   gap: 8px;
-
-  margin-top: 8px;
 }
 
-.btn-editar,
-.btn-eliminar {
+.boton-editar,
+.boton-eliminar {
   padding: 9px;
 
   border-radius: 5px;
 
+  cursor: pointer;
+
   font-size: 11px;
 
   font-weight: bold;
-
-  cursor: pointer;
 }
 
-.btn-editar {
+.boton-editar {
   border: 1px solid #ccc;
 
   background: white;
@@ -958,16 +1737,18 @@ function guardarServicio() {
   color: #555;
 }
 
-.btn-eliminar {
-  border: 1px solid #e2c5c5;
+.boton-eliminar {
+  border: 1px solid #e0c3c3;
 
   background: #fff7f7;
 
-  color: #995050;
+  color: #a05252;
 }
 
 
-/* MODAL */
+/* ======================================================
+   MODAL
+====================================================== */
 
 .modal-fondo {
   position: fixed;
@@ -992,7 +1773,7 @@ function guardarServicio() {
 
   max-width: 570px;
 
-  max-height: 90vh;
+  max-height: 92vh;
 
   overflow-y: auto;
 
@@ -1013,6 +1794,8 @@ function guardarServicio() {
 
 .modal-header h2 {
   margin: 0 0 5px;
+
+  font-size: 20px;
 }
 
 .modal-header p {
@@ -1024,14 +1807,14 @@ function guardarServicio() {
 }
 
 .cerrar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
 
   border: none;
 
-  border-radius: 50%;
-
   background: #eee;
+
+  border-radius: 50%;
 
   font-size: 20px;
 
@@ -1039,7 +1822,9 @@ function guardarServicio() {
 }
 
 
-/* FORMULARIO */
+/* ======================================================
+   FORMULARIO
+====================================================== */
 
 .formulario {
   padding: 20px;
@@ -1075,6 +1860,12 @@ function guardarServicio() {
   color: #555;
 }
 
+.campo label span {
+  color: #999;
+
+  font-weight: normal;
+}
+
 .campo input,
 .campo select,
 .campo textarea {
@@ -1086,6 +1877,10 @@ function guardarServicio() {
 
   border-radius: 5px;
 
+  background: white;
+
+  color: #333;
+
   outline: none;
 
   font-size: 13px;
@@ -1094,7 +1889,7 @@ function guardarServicio() {
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
-  border-color: #bd914d;
+  border-color: #b48a48;
 }
 
 .campo textarea {
@@ -1104,9 +1899,30 @@ function guardarServicio() {
 }
 
 
-/* BOTONES FORMULARIO */
+/* ======================================================
+   ERROR
+====================================================== */
 
-.botones {
+.mensaje-error {
+  padding: 10px;
+
+  background: #f9e6e6;
+
+  border: 1px solid #eccaca;
+
+  color: #a04d4d;
+
+  border-radius: 5px;
+
+  font-size: 12px;
+}
+
+
+/* ======================================================
+   BOTONES FORMULARIO
+====================================================== */
+
+.botones-formulario {
   display: grid;
 
   grid-template-columns: 1fr 1fr;
@@ -1116,8 +1932,8 @@ function guardarServicio() {
   margin-top: 5px;
 }
 
-.btn-cancelar,
-.btn-guardar {
+.boton-cancelar,
+.boton-guardar {
   padding: 11px;
 
   border-radius: 5px;
@@ -1127,61 +1943,123 @@ function guardarServicio() {
   font-weight: bold;
 }
 
-.btn-cancelar {
+.boton-cancelar {
   border: 1px solid #ccc;
 
   background: white;
+
+  color: #555;
 }
 
-.btn-guardar {
+.boton-guardar {
   border: none;
 
-  background: #292929;
+  background: #282828;
 
   color: white;
 }
 
+.boton-guardar:hover {
+  background: #3b3b3b;
+}
 
-/* RESPONSIVE */
 
-@media (max-width: 850px) {
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media (max-width: 950px) {
 
   .lista {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .resumen {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+  .resumen-item:nth-child(3) {
+    border-right: none;
   }
 
 }
 
 
-@media (max-width: 600px) {
+@media (max-width: 650px) {
 
-  .contenido-header {
+  .header-imagen {
+    height: 260px;
+  }
+
+  .header-texto {
+    padding: 25px;
+
     flex-direction: column;
 
     align-items: flex-start;
 
     justify-content: center;
 
-    gap: 20px;
+    gap: 25px;
   }
 
-  .contenido-header h1 {
+  .titulo h1 {
     font-size: 23px;
   }
 
-  .btn-nuevo {
+  .boton-nuevo {
     width: 100%;
+  }
+
+  .resumen {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .resumen-item {
+    border-bottom: 1px solid #e5e1da;
   }
 
   .lista {
     grid-template-columns: 1fr;
   }
 
+  .titulo-lista {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .contenedor {
+    width: 94%;
+  }
+
   .fila {
     grid-template-columns: 1fr;
   }
 
-  .botones {
+  .resumen-numero {
+    font-size: 20px;
+  }
+
+  .resumen-numero.ventas {
+    font-size: 15px;
+  }
+
+  .modal-fondo {
+    padding: 10px;
+  }
+
+  .botones-formulario {
     grid-template-columns: 1fr;
   }
 
