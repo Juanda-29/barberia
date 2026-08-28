@@ -1,8 +1,3 @@
-ORIGINAL
-
-
-
-
 <script setup>
 import { ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
