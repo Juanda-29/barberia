@@ -768,7 +768,7 @@ function claseCalificacion(calificacion) {
             <input
               v-model="form.cliente"
               type="text"
-              placeholder="Ej. Juan Pérez"
+              placeholder="Ej. Juan Castro"
             />
 
           </div>
