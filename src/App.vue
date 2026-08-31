@@ -1,3 +1,4 @@
+```vue
 <script setup>
 import { ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
@@ -10,9 +11,12 @@ const cliente = ref('')
 const servicio = ref('')
 const barbero = ref('')
 const fecha = ref('')
+const hora = ref('')
 const precio = ref('')
 const metodo = ref('')
 const estado = ref('')
+const calificacion = ref('')
+const observaciones = ref('')
 
 function abrirModal() {
   mostrarModal.value = true
@@ -24,8 +28,8 @@ function cerrarModal() {
 
 function guardarServicio() {
 
-  if (cliente.value == '' || servicio.value == '') {
-    alert('Complete los campos principales')
+  if (cliente.value == '' || servicio.value == '' || precio.value == '') {
+    alert('Por favor complete los campos principales')
     return
   }
 
@@ -35,18 +39,24 @@ function guardarServicio() {
     servicio: servicio.value,
     barbero: barbero.value,
     fecha: fecha.value,
+    hora: hora.value,
     precio: precio.value,
     metodo: metodo.value,
-    estado: estado.value
+    estado: estado.value,
+    calificacion: calificacion.value,
+    observaciones: observaciones.value
   })
 
   cliente.value = ''
   servicio.value = ''
   barbero.value = ''
   fecha.value = ''
+  hora.value = ''
   precio.value = ''
   metodo.value = ''
   estado.value = ''
+  calificacion.value = ''
+  observaciones.value = ''
 
   cerrarModal()
 }
@@ -61,8 +71,7 @@ function guardarServicio() {
 
     <header class="header">
 
-      <div class="titulo">
-
+      <div>
         <h1>
           ✂ Barbería Don Ramiro
         </h1>
@@ -70,7 +79,6 @@ function guardarServicio() {
         <p>
           Registro de servicios
         </p>
-
       </div>
 
       <button
@@ -96,7 +104,7 @@ function guardarServicio() {
       </p>
 
 
-      <!-- CUANDO NO HAY SERVICIOS -->
+      <!-- SI NO HAY SERVICIOS -->
 
       <div
         v-if="servicios.length == 0"
@@ -108,7 +116,7 @@ function guardarServicio() {
         </div>
 
         <h3>
-          No hay servicios
+          No hay servicios todavía
         </h3>
 
         <p>
@@ -138,41 +146,63 @@ function guardarServicio() {
           class="tarjeta"
         >
 
-          <h3>
-            {{ item.cliente }}
-          </h3>
+          <div class="tarjeta-arriba">
 
-          <p>
-            <b>Servicio:</b>
-            {{ item.servicio }}
-          </p>
+            <div>
+              <h3>
+                {{ item.cliente }}
+              </h3>
 
-          <p>
-            <b>Barbero:</b>
-            {{ item.barbero }}
-          </p>
+              <span>
+                {{ item.barbero }}
+              </span>
+            </div>
 
-          <p>
-            <b>Fecha:</b>
-            {{ item.fecha }}
-          </p>
+            <strong>
+              ${{ item.precio }}
+            </strong>
 
-          <p>
-            <b>Precio:</b>
-            ${{ item.precio }}
-          </p>
+          </div>
 
-          <p v-if="item.metodo">
-            <b>Pago:</b>
-            {{ item.metodo }}
-          </p>
 
-          <span
-            v-if="item.estado"
-            class="estado"
-          >
-            {{ item.estado }}
-          </span>
+          <div class="informacion">
+
+            <p>
+              <b>Servicio:</b>
+              {{ item.servicio }}
+            </p>
+
+            <p>
+              <b>Fecha:</b>
+              {{ item.fecha }}
+            </p>
+
+            <p>
+              <b>Hora:</b>
+              {{ item.hora }}
+            </p>
+
+            <p v-if="item.metodo">
+              <b>Pago:</b>
+              {{ item.metodo }}
+            </p>
+
+            <p v-if="item.estado">
+              <b>Estado:</b>
+              {{ item.estado }}
+            </p>
+
+            <p v-if="item.calificacion">
+              <b>Calificación:</b>
+              {{ item.calificacion }} / 5
+            </p>
+
+            <p v-if="item.observaciones">
+              <b>Observación:</b>
+              {{ item.observaciones }}
+            </p>
+
+          </div>
 
         </div>
 
@@ -206,9 +236,9 @@ function guardarServicio() {
         </div>
 
 
-        <form @submit.prevent="guardarServicio">
-
-          <!-- CLIENTE -->
+        <form
+          @submit.prevent="guardarServicio"
+        >
 
           <label>
             Nombre del cliente
@@ -217,11 +247,9 @@ function guardarServicio() {
           <input
             v-model="cliente"
             type="text"
-            placeholder="Nombre"
+            placeholder="Nombre del cliente"
           >
 
-
-          <!-- SERVICIO -->
 
           <label>
             Tipo de servicio
@@ -230,7 +258,7 @@ function guardarServicio() {
           <select v-model="servicio">
 
             <option value="">
-              Seleccione
+              Seleccione un servicio
             </option>
 
             <option>
@@ -260,8 +288,6 @@ function guardarServicio() {
           </select>
 
 
-          <!-- BARBERO -->
-
           <label>
             Barbero
           </label>
@@ -287,19 +313,37 @@ function guardarServicio() {
           </select>
 
 
-          <!-- FECHA -->
+          <div class="fila">
 
-          <label>
-            Fecha
-          </label>
+            <div>
 
-          <input
-            v-model="fecha"
-            type="date"
-          >
+              <label>
+                Fecha
+              </label>
+
+              <input
+                v-model="fecha"
+                type="date"
+              >
+
+            </div>
 
 
-          <!-- PRECIO -->
+            <div>
+
+              <label>
+                Hora
+              </label>
+
+              <input
+                v-model="hora"
+                type="time"
+              >
+
+            </div>
+
+          </div>
+
 
           <label>
             Precio
@@ -311,8 +355,6 @@ function guardarServicio() {
             placeholder="20000"
           >
 
-
-          <!-- METODO -->
 
           <label>
             Método de pago
@@ -339,8 +381,6 @@ function guardarServicio() {
           </select>
 
 
-          <!-- ESTADO -->
-
           <label>
             Estado del pago
           </label>
@@ -366,7 +406,48 @@ function guardarServicio() {
           </select>
 
 
-          <!-- BOTONES -->
+          <label>
+            Calificación
+          </label>
+
+          <select v-model="calificacion">
+
+            <option value="">
+              Seleccione
+            </option>
+
+            <option value="1">
+              ⭐ 1
+            </option>
+
+            <option value="2">
+              ⭐⭐ 2
+            </option>
+
+            <option value="3">
+              ⭐⭐⭐ 3
+            </option>
+
+            <option value="4">
+              ⭐⭐⭐⭐ 4
+            </option>
+
+            <option value="5">
+              ⭐⭐⭐⭐⭐ 5
+            </option>
+
+          </select>
+
+
+          <label>
+            Observaciones
+          </label>
+
+          <textarea
+            v-model="observaciones"
+            placeholder="Observaciones..."
+          ></textarea>
+
 
           <div class="botones">
 
@@ -382,7 +463,7 @@ function guardarServicio() {
               type="submit"
               class="btn-guardar"
             >
-              Guardar
+              Guardar servicio
             </button>
 
           </div>
@@ -410,7 +491,7 @@ body {
 
 .pagina {
   min-height: 100vh;
-  background: #f4f4f4;
+  background: #f2f2f2;
   font-family: Arial, sans-serif;
   color: #333;
 }
@@ -422,30 +503,32 @@ body {
   background: #222;
   color: white;
 
-  padding: 20px 7%;
+  padding: 25px 7%;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.titulo h1 {
+.header h1 {
   margin: 0;
   font-size: 25px;
 }
 
-.titulo p {
-  margin: 5px 0 0;
+.header p {
+  margin: 6px 0 0;
   color: #bbb;
-  font-size: 14px;
 }
+
+
+/* BOTON */
 
 .btn-nuevo {
   border: none;
-  background: #c59b5c;
-  color: #222;
+  background: #c49a55;
+  color: white;
 
-  padding: 10px 15px;
+  padding: 11px 17px;
 
   border-radius: 5px;
 
@@ -455,7 +538,7 @@ body {
 }
 
 .btn-nuevo:hover {
-  background: #d6ad70;
+  background: #a98245;
 }
 
 
@@ -463,9 +546,9 @@ body {
 
 .contenido {
   width: 90%;
-  max-width: 1000px;
+  max-width: 1100px;
 
-  margin: 30px auto;
+  margin: 35px auto;
 }
 
 .contenido h2 {
@@ -481,21 +564,26 @@ body {
 /* MENSAJE */
 
 .mensaje {
-  margin-top: 30px;
-
   background: white;
 
   border: 1px solid #ddd;
 
-  padding: 50px 20px;
+  border-radius: 7px;
+
+  padding: 45px 20px;
 
   text-align: center;
 
-  border-radius: 7px;
+  margin-top: 25px;
 }
 
 .icono {
-  font-size: 35px;
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.mensaje h3 {
+  margin: 5px;
 }
 
 .mensaje p {
@@ -506,13 +594,13 @@ body {
 /* TARJETAS */
 
 .tarjetas {
-  margin-top: 25px;
-
   display: grid;
 
   grid-template-columns: repeat(3, 1fr);
 
-  gap: 15px;
+  gap: 18px;
+
+  margin-top: 25px;
 }
 
 .tarjeta {
@@ -525,32 +613,36 @@ body {
   padding: 18px;
 }
 
-.tarjeta h3 {
-  margin-top: 0;
+.tarjeta-arriba {
+  display: flex;
+
+  justify-content: space-between;
 
   border-bottom: 1px solid #eee;
 
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
-.tarjeta p {
+.tarjeta-arriba h3 {
+  margin: 0 0 5px;
+}
+
+.tarjeta-arriba span {
+  color: #888;
+  font-size: 12px;
+}
+
+.tarjeta-arriba strong {
+  color: #a47b39;
+}
+
+.informacion {
+  margin-top: 12px;
+}
+
+.informacion p {
   font-size: 13px;
-
   margin: 9px 0;
-}
-
-.estado {
-  display: inline-block;
-
-  margin-top: 5px;
-
-  padding: 5px 8px;
-
-  background: #eee;
-
-  border-radius: 4px;
-
-  font-size: 11px;
 }
 
 
@@ -569,9 +661,8 @@ body {
 
   display: flex;
 
-  justify-content: center;
-
   align-items: center;
+  justify-content: center;
 
   padding: 20px;
 }
@@ -580,16 +671,15 @@ body {
   background: white;
 
   width: 100%;
-
-  max-width: 500px;
+  max-width: 550px;
 
   max-height: 90vh;
 
   overflow-y: auto;
 
-  border-radius: 7px;
+  padding: 22px;
 
-  padding: 20px;
+  border-radius: 8px;
 }
 
 .modal-titulo {
@@ -624,68 +714,67 @@ body {
 
 /* FORMULARIO */
 
-form {
-  display: flex;
+form label {
+  display: block;
 
-  flex-direction: column;
-
-  gap: 7px;
-}
-
-label {
   font-size: 13px;
 
   font-weight: bold;
 
-  margin-top: 5px;
+  margin: 12px 0 5px;
 }
 
 input,
-select {
+select,
+textarea {
+  width: 100%;
+
   padding: 10px;
 
   border: 1px solid #ccc;
 
-  border-radius: 4px;
+  border-radius: 5px;
 
   font-size: 13px;
 }
 
-input:focus,
-select:focus {
-  outline: none;
+textarea {
+  height: 70px;
 
-  border-color: #c59b5c;
+  resize: none;
+}
+
+.fila {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
 }
 
 
-/* BOTONES */
+/* BOTONES DEL FORMULARIO */
 
 .botones {
   display: flex;
 
+  justify-content: flex-end;
+
   gap: 10px;
 
-  margin-top: 15px;
-}
-
-.btn-cancelar,
-.btn-guardar {
-  flex: 1;
-
-  padding: 10px;
-
-  border-radius: 5px;
-
-  cursor: pointer;
-
-  font-weight: bold;
+  margin-top: 20px;
 }
 
 .btn-cancelar {
   border: 1px solid #ccc;
 
   background: white;
+
+  padding: 10px 15px;
+
+  border-radius: 5px;
+
+  cursor: pointer;
 }
 
 .btn-guardar {
@@ -694,22 +783,36 @@ select:focus {
   background: #222;
 
   color: white;
+
+  padding: 10px 15px;
+
+  border-radius: 5px;
+
+  cursor: pointer;
 }
 
 
 /* RESPONSIVE */
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
+
+  .tarjetas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
+
+@media (max-width: 600px) {
 
   .header {
     flex-direction: column;
 
     align-items: flex-start;
 
-    gap: 15px;
+    gap: 18px;
   }
 
-  .btn-nuevo {
+  .header .btn-nuevo {
     width: 100%;
   }
 
@@ -717,6 +820,15 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .fila {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 </style>
+```
+
+Con este código ya tienes una base bastante creíble para continuar en clase: **`ref()`, `v-model`, `v-if`, `v-for`, `@click`, `@submit` y `useLocalStorage`**, pero todavía faltan partes importantes del CRUD.
+
+Después puedes ir agregando **Editar → Eliminar → confirmación → validaciones → estadísticas**, en ese orden, para que el avance se vea progresivo.
