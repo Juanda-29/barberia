@@ -337,7 +337,7 @@ function claseCalificacion(calificacion) {
         <div class="header-texto">
 
           <div class="titulo">
-             ✂
+             
             <div>
 
               <h1>
