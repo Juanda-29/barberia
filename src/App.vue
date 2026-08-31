@@ -449,18 +449,10 @@ function claseCalificacion(calificacion) {
           </h2>
 
           <p>
-            Aquí puedes consultar y administrar los servicios.
+            Aquí puedes consultar y administrar los servicios
           </p>
 
         </div>
-
-        <span
-          v-if="servicios.length > 0"
-          class="cantidad"
-        >
-          {{ servicios.length }}
-          registrados
-        </span>
 
       </section>
 
