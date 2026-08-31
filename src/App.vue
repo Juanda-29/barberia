@@ -1,194 +1,110 @@
+```vue
 <script setup>
 import { ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-const tiposServicio = [
-  'Corte clásico',
-  'Corte moderno',
-  'Barba',
-  'Corte + barba',
-  'Cejas',
-  'Tinte',
-  'Otro'
-]
-
-const barberos = [
-  'Don Ramiro',
-  'Carlos',
-  'Andrés'
-]
-
-const metodosPago = [
-  'Efectivo',
-  'Transferencia',
-  'Tarjeta'
-]
-
-const estadosPago = [
-  'Pagado',
-  'Pendiente',
-  'Fiado'
-]
-
-const servicios = useLocalStorage(
-  'servicios-barberia',
-  []
-)
 
 const mostrarModal = ref(false)
 const editando = ref(false)
-const idEditando = ref(null)
-const errorFormulario = ref('')
+const idEditar = ref(null)
 
-function formularioVacio() {
-  return {
+const servicios = useLocalStorage('servicios', [])
+
+const formulario = ref({
+  cliente: '',
+  servicio: '',
+  barbero: '',
+  fecha: '',
+  hora: '',
+  precio: '',
+  metodo: '',
+  estado: '',
+  calificacion: '',
+  observaciones: ''
+})
+
+function abrirModal() {
+  mostrarModal.value = true
+  editando.value = false
+  limpiarFormulario()
+}
+
+function cerrarModal() {
+  mostrarModal.value = false
+  limpiarFormulario()
+}
+
+function limpiarFormulario() {
+  formulario.value = {
     cliente: '',
-    tipoServicio: '',
+    servicio: '',
     barbero: '',
     fecha: '',
     hora: '',
     precio: '',
-    metodoPago: '',
-    estadoPago: '',
+    metodo: '',
+    estado: '',
     calificacion: '',
     observaciones: ''
   }
 }
 
-const form = ref(formularioVacio())
-
-
-function abrirModalNuevo() {
-  form.value = formularioVacio()
-  editando.value = false
-  idEditando.value = null
-  errorFormulario.value = ''
-  mostrarModal.value = true
-}
-
-
-function editarServicio(servicio) {
-  form.value = {
-    cliente: servicio.cliente,
-    tipoServicio: servicio.tipoServicio,
-    barbero: servicio.barbero,
-    fecha: servicio.fecha,
-    hora: servicio.hora,
-    precio: servicio.precio,
-    metodoPago: servicio.metodoPago,
-    estadoPago: servicio.estadoPago,
-    calificacion: servicio.calificacion,
-    observaciones: servicio.observaciones
-  }
-
-  idEditando.value = servicio.id
-  editando.value = true
-  errorFormulario.value = ''
-  mostrarModal.value = true
-}
-
-
-function validarFormulario() {
-
-  if (!form.value.cliente.trim()) {
-    return 'Ingrese el nombre del cliente.'
-  }
-
-  if (!form.value.tipoServicio) {
-    return 'Seleccione el tipo de servicio.'
-  }
-
-  if (!form.value.barbero) {
-    return 'Seleccione el barbero.'
-  }
-
-  if (!form.value.fecha) {
-    return 'Seleccione la fecha.'
-  }
-
-  if (!form.value.hora) {
-    return 'Seleccione la hora.'
-  }
-
-  if (!form.value.precio || Number(form.value.precio) <= 0) {
-    return 'Ingrese un precio válido.'
-  }
-
-  if (!form.value.metodoPago) {
-    return 'Seleccione el método de pago.'
-  }
-
-  if (!form.value.estadoPago) {
-    return 'Seleccione el estado del pago.'
-  }
-
-  if (
-    !form.value.calificacion ||
-    Number(form.value.calificacion) < 1 ||
-    Number(form.value.calificacion) > 5
-  ) {
-    return 'Seleccione una calificación entre 1 y 5.'
-  }
-
-  return ''
-}
-
-
-
 function guardarServicio() {
 
-  const error = validarFormulario()
-
-  if (error) {
-    errorFormulario.value = error
+  if (
+    !formulario.value.cliente ||
+    !formulario.value.servicio ||
+    !formulario.value.barbero ||
+    !formulario.value.fecha ||
+    !formulario.value.precio
+  ) {
+    alert('Complete los campos obligatorios')
     return
   }
 
   if (editando.value) {
 
-    const posicion = servicios.value.findIndex(
-      servicio => servicio.id === idEditando.value
-    )
+    for (let i = 0; i < servicios.value.length; i++) {
 
-    if (posicion !== -1) {
-
-      servicios.value[posicion] = {
-        id: idEditando.value,
-        cliente: form.value.cliente,
-        tipoServicio: form.value.tipoServicio,
-        barbero: form.value.barbero,
-        fecha: form.value.fecha,
-        hora: form.value.hora,
-        precio: Number(form.value.precio),
-        metodoPago: form.value.metodoPago,
-        estadoPago: form.value.estadoPago,
-        calificacion: Number(form.value.calificacion),
-        observaciones: form.value.observaciones
+      if (servicios.value[i].id === idEditar.value) {
+        servicios.value[i] = {
+          id: idEditar.value,
+          ...formulario.value
+        }
       }
+
     }
 
   } else {
 
-    const nuevoServicio = {
+    servicios.value.push({
       id: Date.now(),
-      cliente: form.value.cliente,
-      tipoServicio: form.value.tipoServicio,
-      barbero: form.value.barbero,
-      fecha: form.value.fecha,
-      hora: form.value.hora,
-      precio: Number(form.value.precio),
-      metodoPago: form.value.metodoPago,
-      estadoPago: form.value.estadoPago,
-      calificacion: Number(form.value.calificacion),
-      observaciones: form.value.observaciones
-    }
+      ...formulario.value
+    })
 
-    servicios.value.push(nuevoServicio)
   }
 
   cerrarModal()
 }
 
+function editarServicio(servicio) {
 
+  formulario.value = {
+    cliente: servicio.cliente,
+    servicio: servicio.servicio,
+    barbero: servicio.barbero,
+    fecha: servicio.fecha,
+    hora: servicio.hora,
+    precio: servicio.precio,
+    metodo: servicio.metodo,
+    estado: servicio.estado,
+    calificacion: servicio.calificacion,
+    observaciones: servicio.observaciones
+  }
+
+  idEditar.value = servicio.id
+  editando.value = true
+  mostrarModal.value = true
+}
 
 function eliminarServicio(id) {
 
@@ -198,123 +114,18 @@ function eliminarServicio(id) {
 
   if (confirmar) {
 
-    servicios.value = servicios.value.filter(
-      servicio => servicio.id !== id
-    )
-  }
-}
+    const nuevosServicios = []
 
+    for (let i = 0; i < servicios.value.length; i++) {
 
-function cerrarModal() {
+      if (servicios.value[i].id !== id) {
+        nuevosServicios.push(servicios.value[i])
+      }
 
-  mostrarModal.value = false
-  editando.value = false
-  idEditando.value = null
-  errorFormulario.value = ''
-  form.value = formularioVacio()
-}
-
-function cancelar() {
-  cerrarModal()
-}
-
-
-
-function totalServicios() {
-  return servicios.value.length
-}
-
-function contarPagados() {
-
-  return servicios.value.filter(
-    servicio => servicio.estadoPago === 'Pagado'
-  ).length
-}
-
-function contarPendientes() {
-
-  return servicios.value.filter(
-    servicio => servicio.estadoPago === 'Pendiente'
-  ).length
-}
-
-function contarFiados() {
-
-  return servicios.value.filter(
-    servicio => servicio.estadoPago === 'Fiado'
-  ).length
-}
-
-function totalVentas() {
-
-  let total = 0
-
-  servicios.value.forEach(servicio => {
-
-    if (servicio.estadoPago === 'Pagado') {
-      total += Number(servicio.precio)
     }
 
-  })
-
-  return total
-}
-
-
-
-function generarEstrellas(calificacion) {
-
-  let estrellas = ''
-
-  for (let i = 1; i <= 5; i++) {
-
-    if (i <= Number(calificacion)) {
-      estrellas += '★'
-    } else {
-      estrellas += '☆'
-    }
+    servicios.value = nuevosServicios
   }
-
-  return estrellas
-}
-
-function iconoPago(metodo) {
-
-  if (metodo === 'Efectivo') {
-    return 'E'
-  }
-
-  if (metodo === 'Transferencia') {
-    return 'T'
-  }
-
-  return 'C'
-}
-
-function clasePago(estado) {
-
-  if (estado === 'Pagado') {
-    return 'pago-ok'
-  }
-
-  if (estado === 'Pendiente') {
-    return 'pago-pendiente'
-  }
-
-  return 'pago-fiado'
-}
-
-function claseCalificacion(calificacion) {
-
-  if (Number(calificacion) <= 2) {
-    return 'calificacion-baja'
-  }
-
-  if (Number(calificacion) === 3) {
-    return 'calificacion-media'
-  }
-
-  return 'calificacion-alta'
 }
 </script>
 
@@ -323,23 +134,16 @@ function claseCalificacion(calificacion) {
 
   <div class="pagina">
 
-    <!-- ===============================================
-         ENCABEZADO SIMPLE (sin foto, solo texto)
-    ================================================ -->
+    <header class="encabezado">
 
-    <header class="header">
-
-      <h1>
-        Barbería Don Ramiro
-      </h1>
-
-      <p>
-        Control de servicios
-      </p>
+      <div>
+        <h1>✂ Barbería Don Ramiro</h1>
+        <p>Registro de servicios</p>
+      </div>
 
       <button
-        class="boton-nuevo"
-        @click="abrirModalNuevo"
+        class="boton-principal"
+        @click="abrirModal"
       >
         + Nuevo servicio
       </button>
@@ -347,256 +151,416 @@ function claseCalificacion(calificacion) {
     </header>
 
 
+    <main class="contenido">
 
-    <main class="contenedor">
+      <div class="titulo">
 
-      <!-- ===============================================
-           RESUMEN EN TEXTO PLANO
-      ================================================ -->
-
-      <section class="resumen">
+        <h2>Servicios</h2>
 
         <p>
-          Servicios: <strong>{{ totalServicios() }}</strong>
+          Registre los servicios realizados en la barbería.
         </p>
 
-        <p>
-          Pagados: <strong>{{ contarPagados() }}</strong>
-        </p>
+      </div>
 
-        <p>
-          Pendientes: <strong>{{ contarPendientes() }}</strong>
-        </p>
-
-        <p>
-          Fiados: <strong>{{ contarFiados() }}</strong>
-        </p>
-
-        <p>
-          Total vendido: <strong>${{ totalVentas().toLocaleString('es-CO') }}</strong>
-        </p>
-
-      </section>
-
-
-      <hr />
-
-
-      <h2>
-        Servicios registrados
-      </h2>
-
-
-      <!-- ===============================================
-           SIN REGISTROS
-      ================================================ -->
-
-      <p v-if="servicios.length === 0">
-        No hay servicios registrados todavía.
-      </p>
-
-
-      <!-- ===============================================
-           LISTA SIMPLE (sin tarjetas, sin grid)
-      ================================================ -->
 
       <div
-        v-for="servicio in servicios"
-        :key="servicio.id"
-        class="servicio"
+        v-if="servicios.length === 0"
+        class="mensaje"
       >
 
-        <p>
-          <strong>Cliente:</strong> {{ servicio.cliente }}
-        </p>
+        <h3>No hay servicios registrados</h3>
 
         <p>
-          <strong>Servicio:</strong> {{ servicio.tipoServicio }}
+          Presione el botón para registrar el primer servicio.
         </p>
 
-        <p>
-          <strong>Barbero:</strong> {{ servicio.barbero }}
-        </p>
+      </div>
 
-        <p>
-          <strong>Fecha:</strong> {{ servicio.fecha }}
-          &nbsp;
-          <strong>Hora:</strong> {{ servicio.hora }}
-        </p>
 
-        <p>
-          <strong>Precio:</strong> ${{ Number(servicio.precio).toLocaleString('es-CO') }}
-        </p>
+      <div
+        v-if="servicios.length > 0"
+        class="tarjetas"
+      >
 
-        <p>
-          <strong>Método de pago:</strong> {{ servicio.metodoPago }}
-        </p>
-
-        <p>
-
-          <strong>Estado:</strong>
-
-          <span v-if="servicio.estadoPago === 'Pagado'">
-            Pagado
-          </span>
-
-          <span v-else-if="servicio.estadoPago === 'Pendiente'">
-            Pendiente
-          </span>
-
-          <span v-else>
-            Fiado
-          </span>
-
-        </p>
-
-        <p>
-          <strong>Calificación:</strong> {{ generarEstrellas(servicio.calificacion) }}
-        </p>
-
-        <p v-if="servicio.observaciones">
-          <strong>Observaciones:</strong> {{ servicio.observaciones }}
-        </p>
-
-        <button
-          class="boton-editar"
-          @click="editarServicio(servicio)"
+        <div
+          v-for="servicio in servicios"
+          :key="servicio.id"
+          class="tarjeta"
         >
-          Editar
-        </button>
 
-        <button
-          class="boton-eliminar"
-          @click="eliminarServicio(servicio.id)"
-        >
-          Eliminar
-        </button>
+          <div class="tarjeta-arriba">
 
-        <hr />
+            <div>
+
+              <h3>
+                {{ servicio.cliente }}
+              </h3>
+
+              <p>
+                {{ servicio.servicio }}
+              </p>
+
+            </div>
+
+            <strong>
+              ${{ servicio.precio }}
+            </strong>
+
+          </div>
+
+
+          <div class="informacion">
+
+            <p>
+              <b>Barbero:</b>
+              {{ servicio.barbero }}
+            </p>
+
+            <p>
+              <b>Fecha:</b>
+              {{ servicio.fecha }}
+            </p>
+
+            <p>
+              <b>Hora:</b>
+              {{ servicio.hora }}
+            </p>
+
+            <p v-if="servicio.metodo">
+              <b>Pago:</b>
+              {{ servicio.metodo }}
+            </p>
+
+            <p
+              v-if="servicio.estado"
+              :class="{
+                pendiente: servicio.estado === 'Pendiente',
+                fiado: servicio.estado === 'Fiado'
+              }"
+            >
+              <b>Estado:</b>
+              {{ servicio.estado }}
+            </p>
+
+            <p v-if="servicio.calificacion">
+              <b>Calificación:</b>
+              {{ servicio.calificacion }} / 5
+            </p>
+
+            <p v-if="servicio.observaciones">
+              <b>Observación:</b>
+              {{ servicio.observaciones }}
+            </p>
+
+          </div>
+
+
+          <div class="acciones">
+
+            <button
+              class="editar"
+              @click="editarServicio(servicio)"
+            >
+              Editar
+            </button>
+
+            <button
+              class="eliminar"
+              @click="eliminarServicio(servicio.id)"
+            >
+              Eliminar
+            </button>
+
+          </div>
+
+        </div>
 
       </div>
 
     </main>
 
 
-    <!-- ===============================================
-         MODAL SIMPLE
-    ================================================ -->
+    <!-- MODAL -->
 
     <div
       v-if="mostrarModal"
-      class="modal-fondo"
+      class="fondo-modal"
     >
 
       <div class="modal">
 
-        <h2>
-          {{ editando ? 'Editar servicio' : 'Nuevo servicio' }}
-        </h2>
+        <div class="modal-titulo">
 
-        <form @submit.prevent="guardarServicio">
+          <h2 v-if="!editando">
+            Nuevo servicio
+          </h2>
 
-          <label>Nombre del cliente</label>
-          <input
-            v-model="form.cliente"
-            type="text"
-          />
-
-          <label>Tipo de servicio</label>
-          <select v-model="form.tipoServicio">
-            <option value="" disabled>Seleccione</option>
-            <option
-              v-for="tipo in tiposServicio"
-              :key="tipo"
-              :value="tipo"
-            >
-              {{ tipo }}
-            </option>
-          </select>
-
-          <label>Barbero</label>
-          <select v-model="form.barbero">
-            <option value="" disabled>Seleccione</option>
-            <option
-              v-for="barbero in barberos"
-              :key="barbero"
-              :value="barbero"
-            >
-              {{ barbero }}
-            </option>
-          </select>
-
-          <label>Fecha</label>
-          <input v-model="form.fecha" type="date" />
-
-          <label>Hora</label>
-          <input v-model="form.hora" type="time" />
-
-          <label>Precio cobrado</label>
-          <input
-            v-model="form.precio"
-            type="number"
-            min="1"
-          />
-
-          <label>Método de pago</label>
-          <select v-model="form.metodoPago">
-            <option value="" disabled>Seleccione</option>
-            <option
-              v-for="metodo in metodosPago"
-              :key="metodo"
-              :value="metodo"
-            >
-              {{ metodo }}
-            </option>
-          </select>
-
-          <label>Estado del pago</label>
-          <select v-model="form.estadoPago">
-            <option value="" disabled>Seleccione</option>
-            <option
-              v-for="estado in estadosPago"
-              :key="estado"
-              :value="estado"
-            >
-              {{ estado }}
-            </option>
-          </select>
-
-          <label>Calificación</label>
-          <select v-model="form.calificacion">
-            <option value="" disabled>Seleccione</option>
-            <option value="1">★☆☆☆☆</option>
-            <option value="2">★★☆☆☆</option>
-            <option value="3">★★★☆☆</option>
-            <option value="4">★★★★☆</option>
-            <option value="5">★★★★★</option>
-          </select>
-
-          <label>Observaciones (opcional)</label>
-          <textarea v-model="form.observaciones"></textarea>
-
-          <p
-            v-show="errorFormulario"
-            class="mensaje-error"
-          >
-            {{ errorFormulario }}
-          </p>
+          <h2 v-else>
+            Editar servicio
+          </h2>
 
           <button
-            type="button"
-            class="boton-cancelar"
-            @click="cancelar"
+            class="cerrar"
+            @click="cerrarModal"
           >
-            Cancelar
+            ×
           </button>
 
-          <button
-            type="submit"
-            class="boton-guardar"
-          >
-            {{ editando ? 'Guardar cambios' : 'Guardar servicio' }}
-          </button>
+        </div>
+
+
+        <form
+          @submit.prevent="guardarServicio"
+        >
+
+          <div class="campo">
+
+            <label>Nombre del cliente *</label>
+
+            <input
+              v-model="formulario.cliente"
+              type="text"
+              placeholder="Nombre del cliente"
+            >
+
+          </div>
+
+
+          <div class="fila">
+
+            <div class="campo">
+
+              <label>Servicio *</label>
+
+              <select v-model="formulario.servicio">
+
+                <option value="">
+                  Seleccione
+                </option>
+
+                <option>
+                  Corte clásico
+                </option>
+
+                <option>
+                  Corte moderno
+                </option>
+
+                <option>
+                  Barba
+                </option>
+
+                <option>
+                  Corte + barba
+                </option>
+
+                <option>
+                  Cejas
+                </option>
+
+                <option>
+                  Tinte
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="campo">
+
+              <label>Barbero *</label>
+
+              <select v-model="formulario.barbero">
+
+                <option value="">
+                  Seleccione
+                </option>
+
+                <option>
+                  Don Ramiro
+                </option>
+
+                <option>
+                  Carlos
+                </option>
+
+                <option>
+                  Andrés
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+          <div class="fila">
+
+            <div class="campo">
+
+              <label>Fecha *</label>
+
+              <input
+                v-model="formulario.fecha"
+                type="date"
+              >
+
+            </div>
+
+
+            <div class="campo">
+
+              <label>Hora</label>
+
+              <input
+                v-model="formulario.hora"
+                type="time"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="campo">
+
+            <label>Precio *</label>
+
+            <input
+              v-model="formulario.precio"
+              type="number"
+              placeholder="20000"
+            >
+
+          </div>
+
+
+          <div class="fila">
+
+            <div class="campo">
+
+              <label>Método de pago</label>
+
+              <select v-model="formulario.metodo">
+
+                <option value="">
+                  Seleccione
+                </option>
+
+                <option>
+                  Efectivo
+                </option>
+
+                <option>
+                  Transferencia
+                </option>
+
+                <option>
+                  Tarjeta
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="campo">
+
+              <label>Estado del pago</label>
+
+              <select v-model="formulario.estado">
+
+                <option value="">
+                  Seleccione
+                </option>
+
+                <option>
+                  Pagado
+                </option>
+
+                <option>
+                  Pendiente
+                </option>
+
+                <option>
+                  Fiado
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+          <div class="campo">
+
+            <label>Calificación</label>
+
+            <select v-model="formulario.calificacion">
+
+              <option value="">
+                Seleccione
+              </option>
+
+              <option value="1">
+                ★☆☆☆☆
+              </option>
+
+              <option value="2">
+                ★★☆☆☆
+              </option>
+
+              <option value="3">
+                ★★★☆☆
+              </option>
+
+              <option value="4">
+                ★★★★☆
+              </option>
+
+              <option value="5">
+                ★★★★★
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="campo">
+
+            <label>Observaciones</label>
+
+            <textarea
+              v-model="formulario.observaciones"
+              placeholder="Observaciones del servicio"
+            ></textarea>
+
+          </div>
+
+
+          <div class="botones">
+
+            <button
+              type="button"
+              class="cancelar"
+              @click="cerrarModal"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="guardar"
+            >
+              Guardar
+            </button>
+
+          </div>
 
         </form>
 
@@ -620,169 +584,386 @@ body {
 }
 
 .pagina {
-  background: #ffffff;
-  color: #222222;
-  font-family: Arial, Helvetica, sans-serif;
-  padding: 0 0 40px;
+  min-height: 100vh;
+  background: #f4f2ef;
+  color: #292929;
+  font-family: Arial, sans-serif;
 }
 
 
-/* ----- encabezado simple ----- */
+/* ENCABEZADO */
 
-.header {
-  background: #333333;
-  color: #ffffff;
-  padding: 20px;
+.encabezado {
+  background: #292929;
+  color: white;
+
+  padding: 25px 7%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.encabezado h1 {
+  margin: 0;
+  font-size: 25px;
+}
+
+.encabezado p {
+  margin: 7px 0 0;
+  color: #bbb;
+}
+
+
+/* BOTON */
+
+.boton-principal {
+  background: #c59b59;
+  color: #222;
+
+  border: none;
+  border-radius: 5px;
+
+  padding: 11px 16px;
+
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.boton-principal:hover {
+  background: #d3ac6b;
+}
+
+
+/* CONTENIDO */
+
+.contenido {
+  width: 86%;
+  max-width: 1100px;
+
+  margin: 35px auto;
+}
+
+.titulo {
+  margin-bottom: 25px;
+}
+
+.titulo h2 {
+  margin-bottom: 5px;
+}
+
+.titulo p {
+  color: #777;
+  font-size: 14px;
+}
+
+
+/* MENSAJE */
+
+.mensaje {
+  background: white;
+
+  border: 1px solid #ddd;
+
+  border-radius: 6px;
+
+  padding: 45px;
+
   text-align: center;
 }
 
-.header h1 {
-  margin: 0 0 5px;
-  font-size: 22px;
+.mensaje h3 {
+  margin-bottom: 5px;
 }
 
-.header p {
-  margin: 0 0 15px;
-  font-size: 14px;
-}
-
-.boton-nuevo {
-  background: #555555;
-  color: #ffffff;
-  border: 1px solid #ffffff;
-  padding: 8px 14px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.boton-nuevo:hover {
-  background: #666666;
+.mensaje p {
+  color: #777;
 }
 
 
-/* ----- contenedor ----- */
+/* TARJETAS */
 
-.contenedor {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 20px;
+.tarjetas {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
 }
 
-hr {
-  border: none;
-  border-top: 1px solid #cccccc;
-  margin: 15px 0;
+.tarjeta {
+  background: white;
+
+  border: 1px solid #ddd;
+
+  border-radius: 6px;
+
+  padding: 18px;
 }
 
-
-/* ----- resumen ----- */
-
-.resumen p {
-  margin: 4px 0;
-  font-size: 14px;
-}
-
-
-/* ----- lista de servicios ----- */
-
-.servicio p {
-  margin: 4px 0;
-  font-size: 14px;
-}
-
-.boton-editar,
-.boton-eliminar {
-  padding: 6px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  margin-top: 8px;
-  margin-right: 8px;
-}
-
-.boton-editar {
-  background: #eeeeee;
-  border: 1px solid #999999;
-}
-
-.boton-eliminar {
-  background: #f5dddd;
-  border: 1px solid #cc8888;
-}
-
-
-/* ----- modal ----- */
-
-.modal-fondo {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+.tarjeta-arriba {
   display: flex;
+
+  justify-content: space-between;
+
+  border-bottom: 1px solid #eee;
+
+  padding-bottom: 12px;
+}
+
+.tarjeta-arriba h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.tarjeta-arriba p {
+  margin: 5px 0;
+
+  color: #777;
+
+  font-size: 12px;
+}
+
+.tarjeta-arriba strong {
+  color: #9a7135;
+}
+
+.informacion {
+  padding: 12px 0;
+}
+
+.informacion p {
+  margin: 8px 0;
+
+  font-size: 13px;
+}
+
+.informacion b {
+  color: #555;
+}
+
+.pendiente {
+  color: #a36d22;
+}
+
+.fiado {
+  color: #a33d3d;
+}
+
+
+/* ACCIONES */
+
+.acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.acciones button {
+  flex: 1;
+
+  padding: 8px;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+}
+
+.editar {
+  background: white;
+  border: 1px solid #bbb;
+}
+
+.eliminar {
+  background: white;
+  border: 1px solid #d1a5a5;
+
+  color: #9b4545;
+}
+
+
+/* MODAL */
+
+.fondo-modal {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background: rgba(0, 0, 0, .6);
+
+  display: flex;
+
   align-items: center;
   justify-content: center;
-  padding: 15px;
+
+  padding: 20px;
 }
 
 .modal {
-  background: #ffffff;
+  background: white;
+
   width: 100%;
-  max-width: 400px;
+  max-width: 600px;
+
   max-height: 90vh;
+
   overflow-y: auto;
-  padding: 20px;
-  border: 1px solid #999999;
+
+  border-radius: 7px;
 }
 
-.modal h2 {
-  margin: 0 0 10px;
-  font-size: 18px;
-}
+.modal-titulo {
+  padding: 18px 20px;
 
-.modal form {
+  border-bottom: 1px solid #ddd;
+
   display: flex;
-  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: space-between;
 }
 
-.modal label {
-  font-size: 13px;
-  font-weight: bold;
-  margin-top: 10px;
+.modal-titulo h2 {
+  margin: 0;
+  font-size: 20px;
 }
 
-.modal input,
-.modal select,
-.modal textarea {
-  padding: 6px;
-  font-size: 13px;
-  margin-top: 4px;
-  border: 1px solid #999999;
-}
+.cerrar {
+  border: none;
 
-.modal textarea {
-  height: 60px;
-}
+  background: #eee;
 
-.mensaje-error {
-  color: #aa0000;
-  font-size: 13px;
-}
+  width: 30px;
+  height: 30px;
 
-.boton-cancelar,
-.boton-guardar {
-  margin-top: 15px;
-  margin-right: 8px;
-  padding: 8px 14px;
+  border-radius: 50%;
+
+  font-size: 20px;
+
   cursor: pointer;
 }
 
-.boton-cancelar {
-  background: #eeeeee;
-  border: 1px solid #999999;
+
+/* FORMULARIO */
+
+form {
+  padding: 20px;
 }
 
-.boton-guardar {
-  background: #333333;
-  color: #ffffff;
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 12px;
+
+  font-weight: bold;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+
+  padding: 9px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 4px;
+
+  font-size: 13px;
+}
+
+.campo textarea {
+  height: 70px;
+
+  resize: vertical;
+}
+
+.fila {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+
+/* BOTONES DEL FORMULARIO */
+
+.botones {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 20px;
+}
+
+.cancelar,
+.guardar {
+  padding: 10px 18px;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+
+  font-weight: bold;
+}
+
+.cancelar {
+  background: white;
+
+  border: 1px solid #bbb;
+}
+
+.guardar {
+  background: #292929;
+
+  color: white;
+
   border: none;
+}
+
+
+/* CELULAR */
+
+@media (max-width: 750px) {
+
+  .encabezado {
+    padding: 20px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 15px;
+  }
+
+  .boton-principal {
+    width: 100%;
+  }
+
+  .contenido {
+    width: 92%;
+  }
+
+  .tarjetas {
+    grid-template-columns: 1fr;
+  }
+
+  .fila {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 </style>
