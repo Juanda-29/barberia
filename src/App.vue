@@ -328,7 +328,7 @@ function claseCalificacion(calificacion) {
       <div class="header-imagen">
 
         <img
-          src="https://www.beautymarket.es/imagen/min35798.jpg"
+          src="https://joseppons.com/formacion/wp-content/uploads/2020/11/servicios-salon-barberia-2048x1360.jpeg"
           alt="Barbería"
         />
 
@@ -337,11 +337,11 @@ function claseCalificacion(calificacion) {
         <div class="header-texto">
 
           <div class="titulo">
-            
+             ✂
             <div>
 
               <h1>
-              ✂ BARBERIA DON RAMIRO
+               BARBERIA DON RAMIRO
               </h1>
 
               <p>
@@ -449,13 +449,25 @@ function claseCalificacion(calificacion) {
           </h2>
 
           <p>
-            Aquí puedes consultar y administrar los servicios
+            Aquí puedes consultar y administrar los servicios.
           </p>
 
         </div>
 
+        <span
+          v-if="servicios.length > 0"
+          class="cantidad"
+        >
+          {{ servicios.length }}
+          registrados
+        </span>
+
       </section>
 
+
+      <!-- ===============================================
+           SIN REGISTROS
+      ================================================ -->
 
       <section
         v-if="servicios.length === 0"
@@ -484,7 +496,9 @@ function claseCalificacion(calificacion) {
       </section>
 
 
-     
+      <!-- ===============================================
+           LISTA (tarjeta simplificada, tipo ficha)
+      ================================================ -->
 
       <section
         v-if="servicios.length > 0"
@@ -497,29 +511,11 @@ function claseCalificacion(calificacion) {
           class="tarjeta"
         >
 
-       
+          <div class="tarjeta-top">
 
-          <div class="tarjeta-header">
-
-            <div class="cliente">
-
-              <div class="inicial">
-                {{ servicio.cliente.charAt(0).toUpperCase() }}
-              </div>
-
-              <div>
-
-                <h3>
-                  {{ servicio.cliente }}
-                </h3>
-
-                <p>
-                  Atendido por {{ servicio.barbero }}
-                </p>
-
-              </div>
-
-            </div>
+            <h3>
+              {{ servicio.cliente }}
+            </h3>
 
             <strong class="precio">
               ${{ Number(servicio.precio).toLocaleString('es-CO') }}
@@ -527,163 +523,44 @@ function claseCalificacion(calificacion) {
 
           </div>
 
+          <p class="linea">
+            {{ servicio.tipoServicio }} - Atendido por {{ servicio.barbero }}
+          </p>
 
-        
+          <p class="linea">
+            Fecha: {{ servicio.fecha }} &nbsp; Hora: {{ servicio.hora }}
+          </p>
 
-          <div class="servicio-nombre">
+          <p class="linea">
+            Pago: {{ servicio.metodoPago }} —
 
-            <span class="mini-icono">
-              ✂
+            <span v-if="servicio.estadoPago === 'Pagado'">
+              Pagado
             </span>
 
-            <div>
-
-              <small>
-                SERVICIO
-              </small>
-
-              <strong>
-                {{ servicio.tipoServicio }}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-         
-
-          <div class="datos">
-
-            <div>
-
-              <small>
-                FECHA
-              </small>
-
-              <strong>
-                {{ servicio.fecha }}
-              </strong>
-
-            </div>
-
-            <div>
-
-              <small>
-                HORA
-              </small>
-
-              <strong>
-                {{ servicio.hora }}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-       
-
-          <div class="pago">
-
-            <div class="metodo">
-
-              <span class="circulo-pago">
-                {{ iconoPago(servicio.metodoPago) }}
-              </span>
-
-              <div>
-
-                <small>
-                  MÉTODO
-                </small>
-
-                <strong>
-                  {{ servicio.metodoPago }}
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            <span
-              class="estado"
-              :class="clasePago(servicio.estadoPago)"
-            >
-
-              <span v-if="servicio.estadoPago === 'Pagado'">
-                ✓ Pagado
-              </span>
-
-              <span
-                v-else-if="servicio.estadoPago === 'Pendiente'"
-              >
-                ! Pendiente
-              </span>
-
-              <span v-else>
-                $ Fiado
-              </span>
-
+            <span v-else-if="servicio.estadoPago === 'Pendiente'">
+              Pendiente
             </span>
 
-          </div>
+            <span v-else>
+              Fiado
+            </span>
 
+          </p>
 
-        
-
-          <div
-            class="calificacion"
-            :class="claseCalificacion(servicio.calificacion)"
-          >
-
+          <p class="linea">
+            Calificación:
             <span class="estrellas">
               {{ generarEstrellas(servicio.calificacion) }}
             </span>
+          </p>
 
-            <span>
-
-              <span
-                v-if="servicio.calificacion <= 2"
-              >
-                Baja
-              </span>
-
-              <span
-                v-else-if="servicio.calificacion === 3"
-              >
-                Regular
-              </span>
-
-              <span v-else>
-                Buena
-              </span>
-
-            </span>
-
-          </div>
-
-
-         
-
-          <div
+          <p
             v-if="servicio.observaciones"
             class="observacion"
           >
-
-            <strong>
-              Observación:
-            </strong>
-
-            <p>
-              {{ servicio.observaciones }}
-            </p>
-
-          </div>
-
-
-       
+            Observación: {{ servicio.observaciones }}
+          </p>
 
           <div class="acciones">
 
@@ -710,7 +587,10 @@ function claseCalificacion(calificacion) {
     </main>
 
 
-  
+    <!-- ===============================================
+         MODAL (formulario simplificado)
+    ================================================ -->
+
     <div
       v-if="mostrarModal"
       class="modal-fondo"
@@ -720,20 +600,12 @@ function claseCalificacion(calificacion) {
 
         <div class="modal-header">
 
-          <div>
-
-            <h2>
-              {{ editando
-                ? 'Editar servicio'
-                : 'Nuevo servicio'
-              }}
-            </h2>
-
-            <p>
-              Complete la información del servicio.
-            </p>
-
-          </div>
+          <h2>
+            {{ editando
+              ? 'Editar servicio'
+              : 'Nuevo servicio'
+            }}
+          </h2>
 
           <button
             class="cerrar"
@@ -750,7 +622,6 @@ function claseCalificacion(calificacion) {
           @submit.prevent="guardarServicio"
         >
 
-        
           <div class="campo">
 
             <label>
@@ -760,107 +631,96 @@ function claseCalificacion(calificacion) {
             <input
               v-model="form.cliente"
               type="text"
-              placeholder="Ej. Juan Castro"
+              placeholder="Ej. Juan Pérez"
             />
 
           </div>
 
 
-          
+          <div class="campo">
 
-          <div class="fila">
+            <label>
+              Tipo de servicio
+            </label>
 
-            <div class="campo">
+            <select
+              v-model="form.tipoServicio"
+            >
 
-              <label>
-                Tipo de servicio
-              </label>
-
-              <select
-                v-model="form.tipoServicio"
+              <option
+                value=""
+                disabled
               >
+                Seleccione
+              </option>
 
-                <option
-                  value=""
-                  disabled
-                >
-                  Seleccione
-                </option>
-
-                <option
-                  v-for="tipo in tiposServicio"
-                  :key="tipo"
-                  :value="tipo"
-                >
-                  {{ tipo }}
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="campo">
-
-              <label>
-                Barbero
-              </label>
-
-              <select
-                v-model="form.barbero"
+              <option
+                v-for="tipo in tiposServicio"
+                :key="tipo"
+                :value="tipo"
               >
+                {{ tipo }}
+              </option>
 
-                <option
-                  value=""
-                  disabled
-                >
-                  Seleccione
-                </option>
-
-                <option
-                  v-for="barbero in barberos"
-                  :key="barbero"
-                  :value="barbero"
-                >
-                  {{ barbero }}
-                </option>
-
-              </select>
-
-            </div>
+            </select>
 
           </div>
 
 
+          <div class="campo">
 
-          <div class="fila">
+            <label>
+              Barbero
+            </label>
 
-            <div class="campo">
+            <select
+              v-model="form.barbero"
+            >
 
-              <label>
-                Fecha
-              </label>
+              <option
+                value=""
+                disabled
+              >
+                Seleccione
+              </option>
 
-              <input
-                v-model="form.fecha"
-                type="date"
-              />
+              <option
+                v-for="barbero in barberos"
+                :key="barbero"
+                :value="barbero"
+              >
+                {{ barbero }}
+              </option>
 
-            </div>
+            </select>
+
+          </div>
 
 
-            <div class="campo">
+          <div class="campo">
 
-              <label>
-                Hora
-              </label>
+            <label>
+              Fecha
+            </label>
 
-              <input
-                v-model="form.hora"
-                type="time"
-              />
+            <input
+              v-model="form.fecha"
+              type="date"
+            />
 
-            </div>
+          </div>
+
+
+          <div class="campo">
+
+            <label>
+              Hora
+            </label>
+
+            <input
+              v-model="form.hora"
+              type="time"
+            />
 
           </div>
 
@@ -881,73 +741,65 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-        
+          <div class="campo">
 
-          <div class="fila">
+            <label>
+              Método de pago
+            </label>
 
-            <div class="campo">
+            <select
+              v-model="form.metodoPago"
+            >
 
-              <label>
-                Método de pago
-              </label>
-
-              <select
-                v-model="form.metodoPago"
+              <option
+                value=""
+                disabled
               >
+                Seleccione
+              </option>
 
-                <option
-                  value=""
-                  disabled
-                >
-                  Seleccione
-                </option>
-
-                <option
-                  v-for="metodo in metodosPago"
-                  :key="metodo"
-                  :value="metodo"
-                >
-                  {{ metodo }}
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="campo">
-
-              <label>
-                Estado del pago
-              </label>
-
-              <select
-                v-model="form.estadoPago"
+              <option
+                v-for="metodo in metodosPago"
+                :key="metodo"
+                :value="metodo"
               >
+                {{ metodo }}
+              </option>
 
-                <option
-                  value=""
-                  disabled
-                >
-                  Seleccione
-                </option>
-
-                <option
-                  v-for="estado in estadosPago"
-                  :key="estado"
-                  :value="estado"
-                >
-                  {{ estado }}
-                </option>
-
-              </select>
-
-            </div>
+            </select>
 
           </div>
 
 
-        
+          <div class="campo">
+
+            <label>
+              Estado del pago
+            </label>
+
+            <select
+              v-model="form.estadoPago"
+            >
+
+              <option
+                value=""
+                disabled
+              >
+                Seleccione
+              </option>
+
+              <option
+                v-for="estado in estadosPago"
+                :key="estado"
+                :value="estado"
+              >
+                {{ estado }}
+              </option>
+
+            </select>
+
+          </div>
+
 
           <div class="campo">
 
@@ -991,12 +843,10 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-        
           <div class="campo">
 
             <label>
-              Observaciones
-              <span>(opcional)</span>
+              Observaciones (opcional)
             </label>
 
             <textarea
@@ -1015,7 +865,6 @@ function claseCalificacion(calificacion) {
           </div>
 
 
-        
           <div class="botones-formulario">
 
             <button
@@ -1051,7 +900,9 @@ function claseCalificacion(calificacion) {
 
 <style scoped>
 
-
+/* ======================================================
+   GENERAL
+====================================================== */
 
 * {
   box-sizing: border-box;
@@ -1075,6 +926,9 @@ body {
 }
 
 
+/* ======================================================
+   HEADER
+====================================================== */
 
 .header {
   width: 100%;
@@ -1134,22 +988,9 @@ body {
 
   gap: 35px;
 
-  color: rgb(252, 250, 250);
+  color: white;
 
  
-}
-
-
-.logo-simple {
-  width: 50px;
-  height: 50px;
-  border: 2px solid #c59a54;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 25px;
-  color: #c59a54;
 }
 
 .titulo h1 {
@@ -1189,6 +1030,9 @@ body {
 }
 
 
+/* ======================================================
+   CONTENEDOR
+====================================================== */
 
 .contenedor {
   width: 92%;
@@ -1198,6 +1042,10 @@ body {
   margin: 30px auto 60px;
 }
 
+
+/* ======================================================
+   RESUMEN
+====================================================== */
 
 .resumen {
   display: grid;
@@ -1253,6 +1101,9 @@ body {
 }
 
 
+/* ======================================================
+   TÍTULO
+====================================================== */
 
 .titulo-lista {
   display: flex;
@@ -1293,7 +1144,9 @@ body {
 }
 
 
-
+/* ======================================================
+   SIN REGISTROS
+====================================================== */
 
 .sin-registros {
   background: white;
@@ -1339,7 +1192,9 @@ body {
 }
 
 
-
+/* ======================================================
+   LISTA
+====================================================== */
 
 .lista {
   display: grid;
@@ -1351,30 +1206,21 @@ body {
 }
 
 
+/* ======================================================
+   TARJETA - versión simple, tipo ficha de texto
+====================================================== */
 
 .tarjeta {
   background: white;
 
   border: 1px solid #ddd8cf;
 
-  border-radius: 8px;
+  border-radius: 6px;
 
-  padding: 18px;
-
-  transition: .2s;
+  padding: 16px;
 }
 
-.tarjeta:hover {
-  border-color: #c59a54;
-
-  box-shadow:
-    0 4px 15px rgba(0, 0, 0, .06);
-}
-
-
-
-
-.tarjeta-header {
+.tarjeta-top {
   display: flex;
 
   align-items: center;
@@ -1383,261 +1229,59 @@ body {
 
   gap: 10px;
 
-  padding-bottom: 15px;
+  padding-bottom: 10px;
+
+  margin-bottom: 8px;
 
   border-bottom: 1px solid #eeeae3;
 }
 
-.cliente {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-}
-
-.inicial {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #282828;
-
-  color: #c59a54;
-
-  font-weight: bold;
-}
-
-.cliente h3 {
+.tarjeta-top h3 {
   margin: 0;
 
   font-size: 15px;
 }
 
-.cliente p {
-  margin: 4px 0 0;
-
-  color: #888;
-
-  font-size: 11px;
-}
-
 .precio {
   color: #a67a32;
 
-  font-size: 16px;
+  font-size: 15px;
 
   white-space: nowrap;
 }
 
+.linea {
+  margin: 6px 0;
 
-
-.servicio-nombre {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 14px 0;
-}
-
-.mini-icono {
-  width: 35px;
-  height: 35px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  background: #f3eee6;
-
-  color: #a67a32;
-
-  border-radius: 6px;
-}
-
-.servicio-nombre small,
-.datos small,
-.metodo small {
-  display: block;
-
-  color: #999;
-
-  font-size: 9px;
-
-  margin-bottom: 3px;
-
-  letter-spacing: .5px;
-}
-
-.servicio-nombre strong {
   font-size: 13px;
-}
 
-
-
-
-.datos {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 10px;
-
-  padding-bottom: 14px;
-}
-
-.datos strong {
-  font-size: 12px;
-}
-
-
-.pago {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 10px;
-
-  padding: 13px 0;
-
-  border-top: 1px solid #eeeae3;
-
-  border-bottom: 1px solid #eeeae3;
-}
-
-.metodo {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-}
-
-.circulo-pago {
-  width: 30px;
-  height: 30px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #292929;
-
-  color: #c59a54;
-
-  font-size: 11px;
-
-  font-weight: bold;
-}
-
-.metodo strong {
-  font-size: 11px;
-}
-
-.estado {
-  padding: 5px 8px;
-
-  border-radius: 4px;
-
-  font-size: 10px;
-
-  font-weight: bold;
-}
-
-.pago-ok {
-  background: #e5f3e7;
-
-  color: #3f814b;
-}
-
-.pago-pendiente {
-  background: #fff1d9;
-
-  color: #9a6b24;
-}
-
-.pago-fiado {
-  background: #f8e4e4;
-
-  color: #9c4b4b;
-}
-
-
-
-.calificacion {
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
-  padding: 12px 0;
-
-  font-size: 11px;
+  color: #444;
 }
 
 .estrellas {
-  font-size: 15px;
+  color: #c59a54;
 
   letter-spacing: 1px;
 }
 
-.calificacion-alta .estrellas {
-  color: #c59a54;
-}
-
-.calificacion-media .estrellas {
-  color: #c28a35;
-}
-
-.calificacion-baja .estrellas {
-  color: #b65353;
-}
-
-
-
 .observacion {
   background: #f7f5f1;
 
-  border-left: 3px solid #c59a54;
+  padding: 8px;
 
-  padding: 9px;
+  margin: 10px 0;
 
-  margin-bottom: 13px;
+  font-size: 12px;
 
-  font-size: 11px;
-}
+  color: #666;
 
-.observacion strong {
-  font-size: 10px;
-}
-
-.observacion p {
-  margin: 4px 0 0;
-
-  color: #777;
-
-  line-height: 1.4;
+  border-radius: 4px;
 }
 
 
+/* ======================================================
+   ACCIONES
+====================================================== */
 
 .acciones {
   display: grid;
@@ -1645,6 +1289,8 @@ body {
   grid-template-columns: 1fr 1fr;
 
   gap: 8px;
+
+  margin-top: 10px;
 }
 
 .boton-editar,
@@ -1655,7 +1301,7 @@ body {
 
   cursor: pointer;
 
-  font-size: 11px;
+  font-size: 12px;
 
   font-weight: bold;
 }
@@ -1677,14 +1323,16 @@ body {
 }
 
 
-
+/* ======================================================
+   MODAL - versión simple
+====================================================== */
 
 .modal-fondo {
   position: fixed;
 
   inset: 0;
 
-  background: rgba(0, 0, 0, .65);
+  background: rgba(0, 0, 0, .6);
 
   display: flex;
 
@@ -1700,7 +1348,7 @@ body {
 .modal {
   width: 100%;
 
-  max-width: 570px;
+  max-width: 500px;
 
   max-height: 92vh;
 
@@ -1708,7 +1356,7 @@ body {
 
   background: white;
 
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .modal-header {
@@ -1716,28 +1364,22 @@ body {
 
   justify-content: space-between;
 
-  padding: 20px;
+  align-items: center;
+
+  padding: 16px 18px;
 
   border-bottom: 1px solid #ddd;
 }
 
 .modal-header h2 {
-  margin: 0 0 5px;
-
-  font-size: 20px;
-}
-
-.modal-header p {
   margin: 0;
 
-  color: #888;
-
-  font-size: 12px;
+  font-size: 18px;
 }
 
 .cerrar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
 
   border: none;
 
@@ -1745,28 +1387,22 @@ body {
 
   border-radius: 50%;
 
-  font-size: 20px;
+  font-size: 18px;
 
   cursor: pointer;
 }
 
 
-
+/* ======================================================
+   FORMULARIO
+====================================================== */
 
 .formulario {
-  padding: 20px;
+  padding: 18px;
 
   display: flex;
 
   flex-direction: column;
-
-  gap: 13px;
-}
-
-.fila {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
 
   gap: 12px;
 }
@@ -1776,21 +1412,15 @@ body {
 
   flex-direction: column;
 
-  gap: 6px;
+  gap: 5px;
 }
 
 .campo label {
-  font-size: 11px;
+  font-size: 12px;
 
   font-weight: bold;
 
   color: #555;
-}
-
-.campo label span {
-  color: #999;
-
-  font-weight: normal;
 }
 
 .campo input,
@@ -1798,11 +1428,11 @@ body {
 .campo textarea {
   width: 100%;
 
-  padding: 10px;
+  padding: 9px;
 
   border: 1px solid #d5d2cd;
 
-  border-radius: 5px;
+  border-radius: 4px;
 
   background: white;
 
@@ -1820,15 +1450,18 @@ body {
 }
 
 .campo textarea {
-  height: 75px;
+  height: 70px;
 
   resize: vertical;
 }
 
 
+/* ======================================================
+   ERROR
+====================================================== */
 
 .mensaje-error {
-  padding: 10px;
+  padding: 9px;
 
   background: #f9e6e6;
 
@@ -1836,13 +1469,15 @@ body {
 
   color: #a04d4d;
 
-  border-radius: 5px;
+  border-radius: 4px;
 
   font-size: 12px;
 }
 
 
-
+/* ======================================================
+   BOTONES FORMULARIO
+====================================================== */
 
 .botones-formulario {
   display: grid;
@@ -1856,9 +1491,9 @@ body {
 
 .boton-cancelar,
 .boton-guardar {
-  padding: 11px;
+  padding: 10px;
 
-  border-radius: 5px;
+  border-radius: 4px;
 
   cursor: pointer;
 
@@ -1885,5 +1520,102 @@ body {
   background: #3b3b3b;
 }
 
+
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media (max-width: 950px) {
+
+  .lista {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .resumen {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+  .resumen-item:nth-child(3) {
+    border-right: none;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .header-imagen {
+    height: 260px;
+  }
+
+  .header-texto {
+    padding: 25px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    gap: 25px;
+  }
+
+  .titulo h1 {
+    font-size: 23px;
+  }
+
+  .boton-nuevo {
+    width: 100%;
+  }
+
+  .resumen {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .resumen-item {
+    border-bottom: 1px solid #e5e1da;
+  }
+
+  .lista {
+    grid-template-columns: 1fr;
+  }
+
+  .titulo-lista {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .contenedor {
+    width: 94%;
+  }
+
+  .resumen-numero {
+    font-size: 20px;
+  }
+
+  .resumen-numero.ventas {
+    font-size: 15px;
+  }
+
+  .modal-fondo {
+    padding: 10px;
+  }
+
+  .botones-formulario {
+    grid-template-columns: 1fr;
+  }
+
+}
 
 </style>
