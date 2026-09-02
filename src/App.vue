@@ -495,8 +495,10 @@ function listaServicios(servicio) {
 }
 
 .header {
-  background: #88664a;
+  background: #7e5a3d;
   color: #fff;
+  border-radius:15px;
+  background-image:url('/barberia.jpg');
 }
 
 .header-interior {
@@ -525,10 +527,11 @@ function listaServicios(servicio) {
   border: 1px solid #333;
   background: #333;
   color: #fff;
-  padding: 10px 16px;
-  border-radius: 4px;
+  padding: 15px 16px;
+  border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
+
 }
 
 .contenedor {
@@ -547,7 +550,7 @@ function listaServicios(servicio) {
 .resumen-item {
   background: #c9e7e9;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 20px;
   padding: 12px 16px;
   flex: 1;
   min-width: 110px;
@@ -585,9 +588,9 @@ function listaServicios(servicio) {
 }
 
 .tarjeta {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: #e0dec3;
+  border: 1px solid #b39393;
+  border-radius: 30px;
   padding: 14px;
 }
 
@@ -647,7 +650,7 @@ function listaServicios(servicio) {
   margin-top: 8px;
   font-size: 12px;
   color: #555;
-  background: #f7f7f7;
+  background: #e0dec3;
   padding: 6px 8px;
   border-radius: 4px;
 }
@@ -662,19 +665,19 @@ function listaServicios(servicio) {
 .boton-eliminar {
   flex: 1;
   padding: 7px;
-  border-radius: 4px;
+  border-radius: 15px;
   font-size: 12px;
   cursor: pointer;
 }
 
 .boton-editar {
   border: 1px solid #ccc;
-  background: #fff;
+  background: #b4bcdf;
 }
 
 .boton-eliminar {
   border: 1px solid #e3b8b8;
-  background: #fff;
+  background: #e0b7b7;
   color: #a03a3a;
 }
 
@@ -695,7 +698,7 @@ function listaServicios(servicio) {
   max-height: 90vh;
   overflow-y: auto;
   background: #fff;
-  border-radius: 4px;
+  border-radius: 15px;
 }
 
 .modal-header {
@@ -803,7 +806,7 @@ function listaServicios(servicio) {
 .boton-cancelar,
 .boton-guardar {
   padding: 9px;
-  border-radius: 4px;
+  border-radius: 15px;
   cursor: pointer;
   font-weight: bold;
 }
