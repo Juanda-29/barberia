@@ -374,7 +374,7 @@ function listaServicios(servicio) {
                 v-model="form.tipos"
                 @change="actualizarPrecio"
               />
-              {{ tipo }} — ${{ preciosServicios[tipo].toLocaleString('es-CO') }}
+              {{ tipo }} ${{ preciosServicios[tipo].toLocaleString('es-CO') }}
             </label>
 
             <p class="total-preview">
