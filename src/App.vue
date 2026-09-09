@@ -62,7 +62,6 @@ function formularioVacio() {
 
 const form = ref(formularioVacio())
 
-// suma el precio de todos los servicios marcados
 function actualizarPrecio() {
   let total = 0
 
@@ -111,28 +110,28 @@ function editarServicio(servicio) {
 }
 
 function validarFormulario() {
-  if (!form.value.cliente.trim()) {
+  if (form.value.cliente.trim()) {
     return 'Ingrese el nombre del cliente.'
   }
   if (form.value.tipos.length === 0) {
     return 'Seleccione al menos un servicio.'
   }
-  if (!form.value.barbero) {
+  if (form.value.barbero) {
     return 'Seleccione el barbero.'
   }
-  if (!form.value.fecha) {
+  if (form.value.fecha) {
     return 'Seleccione la fecha.'
   }
-  if (!form.value.hora) {
+  if (form.value.hora) {
     return 'Seleccione la hora.'
   }
   if (!form.value.precio || Number(form.value.precio) <= 0) {
     return 'El precio debe ser mayor a 0.'
   }
-  if (!form.value.metodoPago) {
+  if (form.value.metodoPago) {
     return 'Seleccione el método de pago.'
   }
-  if (!form.value.estadoPago) {
+  if (form.value.estadoPago) {
     return 'Seleccione el estado del pago.'
   }
   if (
@@ -309,13 +308,10 @@ function listaServicios(servicio) {
         </div>
       </section>
 
-      <h2 class="titulo-seccion">Servicios registrados</h2>
+      <h2 class="titulo-seccion">SERVICIOS REGISTRADOS</h2>
 
       <section v-if="servicios.length === 0" class="vacio">
-        <p>No hay servicios registrados todavía.</p>
-        <button class="boton-nuevo" @click="abrirModalNuevo">
-          + NUEVO SERVICIO
-        </button>
+        <p>No hay servicios registrados todavía</p>
       </section>
 
       <section v-if="servicios.length > 0" class="lista">
@@ -369,7 +365,7 @@ function listaServicios(servicio) {
           </div>
 
           <div class="campo">
-            <label>Servicios</label>
+            <label>SERVICIOS</label>
 
             <label v-for="tipo in tiposServicio" :key="tipo" class="opcion-check">
               <input
@@ -387,7 +383,7 @@ function listaServicios(servicio) {
           </div>
 
           <div class="campo">
-            <label>Barbero</label>
+            <label>BARBERO</label>
             <select v-model="form.barbero">
               <option value="" disabled>Seleccione</option>
               <option v-for="barbero in barberos" :key="barbero" :value="barbero">
@@ -398,23 +394,23 @@ function listaServicios(servicio) {
 
           <div class="fila">
             <div class="campo">
-              <label>Fecha</label>
+              <label>FECHA</label>
               <input v-model="form.fecha" type="date" />
             </div>
             <div class="campo">
-              <label>Hora</label>
+              <label>HORA</label>
               <input v-model="form.hora" type="time" />
             </div>
           </div>
 
           <div class="campo">
-            <label>Precio total</label>
+            <label>PRECIO TOTAL</label>
             <input v-model="form.precio" type="number" min="1" />
           </div>
 
           <div class="fila">
             <div class="campo">
-              <label>Método de pago</label>
+              <label>METODO DE PAGO</label>
               <select v-model="form.metodoPago">
                 <option value="" disabled>Seleccione</option>
                 <option v-for="metodo in metodosPago" :key="metodo" :value="metodo">
@@ -424,7 +420,7 @@ function listaServicios(servicio) {
             </div>
 
             <div class="campo">
-              <label>Estado del pago</label>
+              <label>ESTADO DEL PAGO</label>
               <select v-model="form.estadoPago">
                 <option value="" disabled>Seleccione</option>
                 <option v-for="estado in estadosPago" :key="estado" :value="estado">
@@ -435,7 +431,7 @@ function listaServicios(servicio) {
           </div>
 
           <div class="campo">
-            <label>Calificación</label>
+            <label>CALIFICACION</label>
             <select v-model="form.calificacion">
               <option value="" disabled>Seleccione</option>
               <option value="1">★☆☆☆☆</option>
@@ -493,45 +489,57 @@ function listaServicios(servicio) {
   color: #222;
   font-family: Arial, Helvetica, sans-serif;
 }
-
 .header {
   background: #7e5a3d;
   color: #fff;
-  border-radius:15px;
-  background-image:url('/barberia.jpg');
+  border-radius: 15px;
+  background-image: url('/barberia.jpg');
+  background-size: cover;
+  background-position: center;
+  min-height: 300px;
 }
 
 .header-interior {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  min-height: 450px;
+  padding: 20px 50px 220px 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 30px;
+  background: rgba(0, 0, 0, 0.40);
+  border-radius: 15px;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 48px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  line-height: 1.1;
 }
 
 .header p {
-  margin: 4px 0 0;
-  color: #bbb;
-  font-size: 13px;
+  margin: 12px 0 0;
+  color: #c3e95d;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 2px;
 }
 
 .boton-nuevo {
-  border: 1px solid #333;
-  background: #333;
+  border: none;
+  background: #31af5b;
   color: #fff;
-  padding: 15px 16px;
+  padding: 15px 22px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
+  white-space: nowrap;
+}
 
+.boton-nuevo:hover {
+  background: #111;
 }
 
 .contenedor {
