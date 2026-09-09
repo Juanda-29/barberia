@@ -311,7 +311,7 @@ function listaServicios(servicio) {
       <h2 class="titulo-seccion">SERVICIOS REGISTRADOS</h2>
 
       <section v-if="servicios.length === 0" class="vacio">
-        <p>No hay servicios registrados todavía</p>
+        <p>No hay servicios registrados todavía......</p>
       </section>
 
       <section v-if="servicios.length > 0" class="lista">
@@ -360,7 +360,7 @@ function listaServicios(servicio) {
         <form class="formulario" @submit.prevent="guardarServicio">
 
           <div class="campo">
-            <label>Nombre del cliente</label>
+            <label>NOMBRE DEL CLIENTE</label>
             <input v-model="form.cliente" type="text" />
           </div>
 
