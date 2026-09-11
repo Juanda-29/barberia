@@ -72,6 +72,45 @@ function actualizarPrecio() {
   form.value.precio = total
 }
 
+/* =========================
+   FECHA ACTUAL
+========================= */
+
+function fechaMinima() {
+  const hoy = new Date()
+
+  const año = hoy.getFullYear()
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+  const dia = String(hoy.getDate()).padStart(2, '0')
+
+  return `${año}-${mes}-${dia}`
+}
+
+/* =========================
+   HORA MÍNIMA
+========================= */
+
+function horaMinima() {
+  /*
+    Si la fecha seleccionada NO es hoy,
+    se puede seleccionar cualquier hora.
+  */
+  if (form.value.fecha !== fechaMinima()) {
+    return '00:00'
+  }
+
+  const ahora = new Date()
+
+  const horas = String(ahora.getHours()).padStart(2, '0')
+  const minutos = String(ahora.getMinutes()).padStart(2, '0')
+
+  return `${horas}:${minutos}`
+}
+
+/* =========================
+   MODAL NUEVO
+========================= */
+
 function abrirModalNuevo() {
   form.value = formularioVacio()
   editando.value = false
@@ -79,6 +118,10 @@ function abrirModalNuevo() {
   errorFormulario.value = ''
   mostrarModal.value = true
 }
+
+/* =========================
+   EDITAR
+========================= */
 
 function editarServicio(servicio) {
   let tiposCargados = []
@@ -107,7 +150,12 @@ function editarServicio(servicio) {
   mostrarModal.value = true
 }
 
+/* =========================
+   VALIDAR FORMULARIO
+========================= */
+
 function validarFormulario() {
+
   if (!form.value.cliente.trim()) {
     return 'Ingrese el nombre del cliente.'
   }
@@ -124,8 +172,24 @@ function validarFormulario() {
     return 'Seleccione la fecha.'
   }
 
+  /* NO PERMITIR FECHAS PASADAS */
+  if (form.value.fecha < fechaMinima()) {
+    return 'No puede seleccionar una fecha anterior al día actual.'
+  }
+
   if (!form.value.hora) {
     return 'Seleccione la hora.'
+  }
+
+  /*
+    SI ES HOY:
+    NO PERMITIR UNA HORA ANTERIOR
+  */
+  if (
+    form.value.fecha === fechaMinima() &&
+    form.value.hora < horaMinima()
+  ) {
+    return 'No puede seleccionar una hora anterior a la hora actual.'
   }
 
   if (!form.value.precio || Number(form.value.precio) <= 0) {
@@ -143,7 +207,12 @@ function validarFormulario() {
   return ''
 }
 
+/* =========================
+   GUARDAR SERVICIO
+========================= */
+
 function guardarServicio() {
+
   const error = validarFormulario()
 
   if (error) {
@@ -152,13 +221,16 @@ function guardarServicio() {
   }
 
   if (editando.value) {
+
     const posicion = servicios.value.findIndex(
       s => s.id === idEditando.value
     )
 
     if (posicion !== -1) {
+
       servicios.value[posicion] = {
         ...servicios.value[posicion],
+
         cliente: form.value.cliente,
         tipos: [...form.value.tipos],
         barbero: form.value.barbero,
@@ -172,17 +244,30 @@ function guardarServicio() {
     }
 
   } else {
+
     const nuevoServicio = {
+
       id: Date.now(),
+
       cliente: form.value.cliente,
+
       tipos: [...form.value.tipos],
+
       barbero: form.value.barbero,
+
       fecha: form.value.fecha,
+
       hora: form.value.hora,
+
       precio: Number(form.value.precio),
+
       metodoPago: form.value.metodoPago,
+
       estadoPago: form.value.estadoPago,
+
+      /* EMPIEZA SIN CALIFICACIÓN */
       calificacion: 0,
+
       observaciones: form.value.observaciones
     }
 
@@ -192,28 +277,77 @@ function guardarServicio() {
   cerrarModal()
 }
 
+/* =========================
+   CALIFICAR SERVICIO
+========================= */
+
 async function calificarServicio(servicio) {
+
+  /*
+    SI YA TIENE CALIFICACIÓN,
+    NO SE PUEDE VOLVER A CALIFICAR
+  */
+
+  if (
+    servicio.calificacion &&
+    Number(servicio.calificacion) > 0
+  ) {
+
+    await Swal.fire({
+
+      icon: 'info',
+
+      title: 'Servicio ya calificado',
+
+      text: 'Este servicio ya tiene una calificación y no se puede modificar.',
+
+      confirmButtonText: 'Aceptar',
+
+      confirmButtonColor: '#b8860b'
+    })
+
+    return
+  }
+
   const { value: calificacion } = await Swal.fire({
+
     title: 'Califica tu servicio',
+
     text: 'Selecciona una calificación de 1 a 5 estrellas',
+
     input: 'select',
+
     inputOptions: {
+
       1: '⭐ 1 estrella',
+
       2: '⭐⭐ 2 estrellas',
+
       3: '⭐⭐⭐ 3 estrellas',
+
       4: '⭐⭐⭐⭐ 4 estrellas',
+
       5: '⭐⭐⭐⭐⭐ 5 estrellas'
     },
+
     inputPlaceholder: 'Selecciona tu calificación',
+
     showCancelButton: true,
+
     confirmButtonText: 'Guardar calificación',
+
     cancelButtonText: 'Cancelar',
+
     confirmButtonColor: '#b8860b',
+
     cancelButtonColor: '#666',
+
     inputValidator: (value) => {
+
       if (!value) {
         return 'Debes seleccionar una calificación'
       }
+
     }
   })
 
@@ -226,19 +360,32 @@ async function calificarServicio(servicio) {
   )
 
   if (posicion !== -1) {
-    servicios.value[posicion].calificacion = Number(calificacion)
+
+    servicios.value[posicion].calificacion =
+      Number(calificacion)
 
     await Swal.fire({
+
       icon: 'success',
+
       title: '¡Calificación guardada!',
+
       text: `Has calificado el servicio con ${calificacion} estrella${calificacion > 1 ? 's' : ''}.`,
+
       confirmButtonText: 'Aceptar',
+
       confirmButtonColor: '#b8860b',
+
       timer: 2000,
+
       timerProgressBar: true
     })
   }
 }
+
+/* =========================
+   ELIMINAR
+========================= */
 
 function pedirConfirmacionEliminar(id) {
   idParaEliminar.value = id
@@ -249,6 +396,7 @@ function cancelarEliminar() {
 }
 
 function confirmarEliminar() {
+
   servicios.value = servicios.value.filter(
     s => s.id !== idParaEliminar.value
   )
@@ -257,6 +405,7 @@ function confirmarEliminar() {
 }
 
 function nombreServicioAEliminar() {
+
   const servicio = servicios.value.find(
     s => s.id === idParaEliminar.value
   )
@@ -264,11 +413,20 @@ function nombreServicioAEliminar() {
   return servicio ? servicio.cliente : ''
 }
 
+/* =========================
+   CERRAR MODAL
+========================= */
+
 function cerrarModal() {
+
   mostrarModal.value = false
+
   editando.value = false
+
   idEditando.value = null
+
   errorFormulario.value = ''
+
   form.value = formularioVacio()
 }
 
@@ -276,33 +434,43 @@ function cancelar() {
   cerrarModal()
 }
 
+/* =========================
+   RESUMEN
+========================= */
+
 function totalServicios() {
   return servicios.value.length
 }
 
 function contarPagados() {
+
   return servicios.value.filter(
     s => s.estadoPago === 'Pagado'
   ).length
 }
 
 function contarPendientes() {
+
   return servicios.value.filter(
     s => s.estadoPago === 'Pendiente'
   ).length
 }
 
 function contarAbonados() {
+
   return servicios.value.filter(
     s => s.estadoPago === 'Abonado'
   ).length
 }
 
 function totalVentas() {
+
   let total = 0
 
   servicios.value.forEach(s => {
+
     if (s.estadoPago === 'Pagado') {
+
       total += Number(s.precio)
     }
   })
@@ -311,10 +479,13 @@ function totalVentas() {
 }
 
 function totaldebe() {
+
   let total = 0
 
   servicios.value.forEach(s => {
+
     if (s.estadoPago === 'Pendiente') {
+
       total += Number(s.precio)
     }
   })
@@ -322,10 +493,16 @@ function totaldebe() {
   return total
 }
 
+/* =========================
+   ESTRELLAS
+========================= */
+
 function generarEstrellas(calificacion) {
+
   let estrellas = ''
 
   for (let i = 1; i <= 5; i++) {
+
     estrellas += i <= Number(calificacion)
       ? '★'
       : '☆'
@@ -334,15 +511,22 @@ function generarEstrellas(calificacion) {
   return estrellas
 }
 
+/* =========================
+   SERVICIOS
+========================= */
+
 function listaServicios(servicio) {
+
   if (
     Array.isArray(servicio.tipos) &&
     servicio.tipos.length > 0
   ) {
+
     return servicio.tipos.join(', ')
   }
 
   if (servicio.tipoServicio) {
+
     return servicio.tipoServicio
   }
 
@@ -351,14 +535,25 @@ function listaServicios(servicio) {
 </script>
 
 <template>
+
   <div class="pagina">
 
+    <!-- HEADER -->
+
     <header class="header">
+
       <div class="header-interior">
 
         <div>
-          <h1>BARBERIA DON RAMIRO</h1>
-          <p>CONTROL DE SERVICIOS</p>
+
+          <h1>
+            BARBERIA DON RAMIRO
+          </h1>
+
+          <p>
+            CONTROL DE SERVICIOS
+          </p>
+
         </div>
 
         <button
@@ -369,80 +564,111 @@ function listaServicios(servicio) {
         </button>
 
       </div>
+
     </header>
 
+    <!-- CONTENIDO -->
+
     <main class="contenedor">
+
+      <!-- RESUMEN -->
 
       <section class="resumen">
 
         <div class="resumen-item">
+
           <span class="numero">
             {{ totalServicios() }}
           </span>
+
           <span class="texto">
             SERVICIOS
           </span>
+
         </div>
 
         <div class="resumen-item">
+
           <span class="numero">
             {{ contarPagados() }}
           </span>
+
           <span class="texto">
             PAGADOS
           </span>
+
         </div>
 
         <div class="resumen-item">
+
           <span class="numero">
             {{ contarPendientes() }}
           </span>
+
           <span class="texto">
             PENDIENTES
           </span>
+
         </div>
 
         <div class="resumen-item">
+
           <span class="numero">
             {{ contarAbonados() }}
           </span>
+
           <span class="texto">
             ABONADOS
           </span>
+
         </div>
 
         <div class="resumen-item">
+
           <span class="numero">
             ${{ totalVentas().toLocaleString('es-CO') }}
           </span>
+
           <span class="texto">
             VENTAS PAGADAS
           </span>
+
         </div>
 
-      <div class="resumen-item">
-       <span class="numero">
-       ${{ totaldebe().toLocaleString('es-CO') }}
-       </span>
+        <div class="resumen-item">
 
-       <span class="texto">
-       TOTAL DEBE
-       </span>
-      </div>
+          <span class="numero">
+            ${{ totaldebe().toLocaleString('es-CO') }}
+          </span>
 
+          <span class="texto">
+            TOTAL DEBE
+          </span>
+
+        </div>
 
       </section>
 
+      <!-- TITULO -->
+
       <h2 class="titulo-seccion">
-        SERVICIOS REGISTRADOS 
+        SERVICIOS REGISTRADOS
       </h2>
+
+      <!-- VACIO -->
 
       <section
         v-if="servicios.length === 0"
         class="vacio"
       >
-        <p>No hay servicios registrados todavía..</p>
+
+        <p>
+          No hay servicios registrados todavía..
+        </p>
+
       </section>
+
+      <!-- CARDS -->
 
       <section
         v-if="servicios.length > 0"
@@ -508,6 +734,8 @@ function listaServicios(servicio) {
 
           </p>
 
+          <!-- CALIFICACIÓN -->
+
           <div class="calificacion-servicio">
 
             <span
@@ -518,17 +746,26 @@ function listaServicios(servicio) {
             </span>
 
             <button
+              v-if="
+                !servicio.calificacion ||
+                servicio.calificacion === 0
+              "
               class="boton-calificar"
               @click="calificarServicio(servicio)"
             >
-              {{
-                servicio.calificacion > 0
-                  ? 'Cambiar calificación'
-                  : 'Calificar servicio'
-              }}
+              Calificar servicio
             </button>
 
+            <span
+              v-else
+              class="calificacion-bloqueada"
+            >
+              Ya calificado
+            </span>
+
           </div>
+
+          <!-- OBSERVACIONES -->
 
           <p
             v-if="servicio.observaciones"
@@ -536,6 +773,8 @@ function listaServicios(servicio) {
           >
             {{ servicio.observaciones }}
           </p>
+
+          <!-- ACCIONES -->
 
           <div class="acciones">
 
@@ -561,6 +800,8 @@ function listaServicios(servicio) {
 
     </main>
 
+    <!-- MODAL -->
+
     <div
       v-if="mostrarModal"
       class="modal-fondo"
@@ -571,11 +812,13 @@ function listaServicios(servicio) {
         <div class="modal-header">
 
           <h2>
+
             {{
               editando
                 ? 'Editar servicio'
                 : 'Nuevo servicio'
             }}
+
           </h2>
 
           <button
@@ -592,6 +835,8 @@ function listaServicios(servicio) {
           @submit.prevent="guardarServicio"
         >
 
+          <!-- CLIENTE -->
+
           <div class="campo">
 
             <label>
@@ -604,6 +849,8 @@ function listaServicios(servicio) {
             />
 
           </div>
+
+          <!-- SERVICIOS -->
 
           <div class="campo">
 
@@ -625,16 +872,14 @@ function listaServicios(servicio) {
               />
 
               {{ tipo }}
+
               ${{ preciosServicios[tipo].toLocaleString('es-CO') }}
 
             </label>
 
-            <p class="total-preview">
-              Total:
-              ${{ Number(form.precio || 0).toLocaleString('es-CO') }}
-            </p>
-
           </div>
+
+          <!-- BARBERO -->
 
           <div class="campo">
 
@@ -663,6 +908,8 @@ function listaServicios(servicio) {
 
           </div>
 
+          <!-- FECHA Y HORA -->
+
           <div class="fila">
 
             <div class="campo">
@@ -674,6 +921,7 @@ function listaServicios(servicio) {
               <input
                 v-model="form.fecha"
                 type="date"
+                :min="fechaMinima()"
               />
 
             </div>
@@ -687,11 +935,14 @@ function listaServicios(servicio) {
               <input
                 v-model="form.hora"
                 type="time"
+                :min="horaMinima()"
               />
 
             </div>
 
           </div>
+
+          <!-- PRECIO -->
 
           <div class="campo">
 
@@ -699,16 +950,23 @@ function listaServicios(servicio) {
               PRECIO TOTAL
             </label>
 
-            <div class="input-con-simbolo">
-              <span class="simbolo">$</span>
+            <div class="input-con-simbolo precio-bloqueado">
+
+              <span class="simbolo">
+                $
+              </span>
+
               <input
                 v-model="form.precio"
                 type="number"
-                min="1"
+                readonly
               />
+
             </div>
 
           </div>
+
+          <!-- PAGO -->
 
           <div class="fila">
 
@@ -768,6 +1026,8 @@ function listaServicios(servicio) {
 
           </div>
 
+          <!-- OBSERVACIONES -->
+
           <div class="campo">
 
             <label>
@@ -780,12 +1040,16 @@ function listaServicios(servicio) {
 
           </div>
 
+          <!-- ERROR -->
+
           <div
             v-show="errorFormulario"
             class="mensaje-error"
           >
             {{ errorFormulario }}
           </div>
+
+          <!-- BOTONES -->
 
           <div class="botones-formulario">
 
@@ -801,11 +1065,13 @@ function listaServicios(servicio) {
               type="submit"
               class="boton-guardar"
             >
+
               {{
                 editando
                   ? 'Guardar cambios'
                   : 'Guardar servicio'
               }}
+
             </button>
 
           </div>
@@ -815,6 +1081,8 @@ function listaServicios(servicio) {
       </div>
 
     </div>
+
+    <!-- CONFIRMAR ELIMINACIÓN -->
 
     <div
       v-if="idParaEliminar !== null"
@@ -828,10 +1096,13 @@ function listaServicios(servicio) {
         </h3>
 
         <p>
+
           ¿Estás seguro que quieres eliminar el servicio de
+
           <strong>
             {{ nombreServicioAEliminar() }}
           </strong>?
+
         </p>
 
         <div class="confirmar-botones">
@@ -857,6 +1128,7 @@ function listaServicios(servicio) {
     </div>
 
   </div>
+
 </template>
 
 <style scoped>
@@ -871,6 +1143,10 @@ function listaServicios(servicio) {
   color: #222;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================
+   HEADER
+========================= */
 
 .header {
   background: #7e5a3d;
@@ -925,11 +1201,19 @@ function listaServicios(servicio) {
   background: #111;
 }
 
+/* =========================
+   CONTENEDOR
+========================= */
+
 .contenedor {
   width: 92%;
   max-width: 1000px;
   margin: 24px auto 50px;
 }
+
+/* =========================
+   RESUMEN
+========================= */
 
 .resumen {
   display: flex;
@@ -964,6 +1248,10 @@ function listaServicios(servicio) {
   margin-bottom: 12px;
 }
 
+/* =========================
+   VACÍO
+========================= */
+
 .vacio {
   background: #fff;
   border: 1px solid #ddd;
@@ -971,6 +1259,10 @@ function listaServicios(servicio) {
   padding: 30px;
   text-align: center;
 }
+
+/* =========================
+   CARDS
+========================= */
 
 .lista {
   display: grid;
@@ -982,39 +1274,45 @@ function listaServicios(servicio) {
   background: #e0dec3;
   border: 1px solid #b39393;
   border-radius: 30px;
-  padding: 14px;
+  padding: 18px;
 }
 
 .tarjeta-top {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .tarjeta-top h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 19px;
+  font-weight: bold;
 }
 
 .precio {
-  font-size: 14px;
+  font-size: 17px;
+  font-weight: bold;
 }
 
 .linea {
-  margin: 4px 0;
-  font-size: 13px;
+  margin: 6px 0;
+  font-size: 15px;
   color: #444;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* =========================
+   ESTADOS
+========================= */
+
 .estado {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 4px 8px;
+  border-radius: 5px;
 }
 
 .estado.ok {
@@ -1032,19 +1330,26 @@ function listaServicios(servicio) {
   color: #d17812;
 }
 
+/* =========================
+   ESTRELLAS
+========================= */
+
 .estrellas {
   color: #b8860b;
-  font-size: 15px;
+  font-size: 18px;
 }
 
-/* CALIFICACION */
+/* =========================
+   CALIFICACIÓN
+========================= */
+
 .calificacion-servicio {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 10px;
-  padding-top: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
@@ -1052,9 +1357,9 @@ function listaServicios(servicio) {
   border: none;
   background: #b8860b;
   color: #fff;
-  padding: 6px 10px;
+  padding: 7px 11px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -1062,27 +1367,44 @@ function listaServicios(servicio) {
   background: #111;
 }
 
-.observacion {
-  margin-top: 8px;
+.calificacion-bloqueada {
   font-size: 12px;
+  color: #666;
+  background: #e5e5e5;
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* =========================
+   OBSERVACIÓN
+========================= */
+
+.observacion {
+  margin-top: 10px;
+  font-size: 14px;
   color: #555;
   background: #e0dec3;
-  padding: 6px 8px;
+  padding: 7px 9px;
   border-radius: 4px;
 }
+
+/* =========================
+   ACCIONES
+========================= */
 
 .acciones {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .boton-editar,
 .boton-eliminar {
   flex: 1;
-  padding: 7px;
+  padding: 8px;
   border-radius: 15px;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
 }
 
@@ -1096,6 +1418,10 @@ function listaServicios(servicio) {
   background: #e0b7b7;
   color: #a03a3a;
 }
+
+/* =========================
+   MODAL
+========================= */
 
 .modal-fondo {
   position: fixed;
@@ -1184,6 +1510,10 @@ function listaServicios(servicio) {
   resize: vertical;
 }
 
+/* =========================
+   PRECIO
+========================= */
+
 .input-con-simbolo {
   display: flex;
   align-items: center;
@@ -1212,6 +1542,20 @@ function listaServicios(servicio) {
   outline: none;
 }
 
+.precio-bloqueado {
+  background: #f2f2f2;
+  border-radius: 5px;
+}
+
+.precio-bloqueado input {
+  cursor: not-allowed;
+  color: #555;
+}
+
+/* =========================
+   CHECKBOX
+========================= */
+
 .opcion-check {
   display: flex;
   align-items: center;
@@ -1226,11 +1570,9 @@ function listaServicios(servicio) {
   width: auto;
 }
 
-.total-preview {
-  margin: 4px 0 0;
-  font-size: 13px;
-  font-weight: bold;
-}
+/* =========================
+   ERROR
+========================= */
 
 .mensaje-error {
   background: #fbe6e6;
@@ -1239,6 +1581,10 @@ function listaServicios(servicio) {
   border-radius: 4px;
   font-size: 12px;
 }
+
+/* =========================
+   BOTONES FORMULARIO
+========================= */
 
 .botones-formulario {
   display: grid;
@@ -1265,6 +1611,10 @@ function listaServicios(servicio) {
   background: #1f1f1f;
   color: #fff;
 }
+
+/* =========================
+   CONFIRMAR ELIMINACIÓN
+========================= */
 
 .confirmar-fondo {
   position: fixed;
