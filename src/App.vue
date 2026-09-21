@@ -3743,9 +3743,9 @@ const errorFormulario = computed(() => {
 .modal {
   width: 100%;
 
-  max-width: 460px;
+  max-width: 750px;
 
-  max-height: 90vh;
+  max-height: 105vh;
 
   overflow-y: auto;
 
