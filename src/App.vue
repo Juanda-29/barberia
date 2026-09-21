@@ -32,8 +32,8 @@ const cierresCaja = useLocalStorage('don_ramiro_cierres_caja', [])
 
 const listaBarberos = [
   { nombre: 'Don Ramiro', comision: 50 },
-  { nombre: 'David', comision: 40 },
-  { nombre: 'Raul', comision: 40 }
+  { nombre: 'Empleado 1', comision: 40 },
+  { nombre: 'Empleado 2', comision: 40 }
 ]
 
 const barberos = listaBarberos.map(b => b.nombre)
@@ -1940,6 +1940,33 @@ const errorFormulario = computed(() => {
 
               </p>
 
+              <!-- RESUMEN DEL DINERO -->
+              <div class="resumen-pago">
+                <div class="resumen-pago-item">
+                  <span>Cliente abona</span>
+                  <strong>
+                    ${{
+                      Number(
+                        servicio.estadoPago === 'Pagado'
+                          ? totalServicio(servicio)
+                          : servicio.estadoPago === 'Abonado'
+                            ? servicio.abono || 0
+                            : 0
+                      ).toLocaleString('es-CO')
+                    }}
+                  </strong>
+                </div>
+
+                <div class="resumen-pago-item restante">
+                  <span>Restante</span>
+                  <strong>
+                    ${{
+                      calcularSaldoRegistro(servicio).toLocaleString('es-CO')
+                    }}
+                  </strong>
+                </div>
+              </div>
+
               <p class="linea">
 
                 <span
@@ -3416,6 +3443,42 @@ const errorFormulario = computed(() => {
 .estado.abonado {
   background: #f7ddcc;
   color: #d17812;
+}
+
+/* =========================
+   RESUMEN DE PAGO
+========================= */
+
+.resumen-pago {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f5f4e8;
+  border: 1px solid #c8c5a7;
+}
+
+.resumen-pago-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resumen-pago-item span {
+  font-size: 12px;
+  color: #555;
+  font-weight: 600;
+}
+
+.resumen-pago-item strong {
+  font-size: 16px;
+  color: #222;
+}
+
+.resumen-pago-item.restante strong {
+  color: #b3261e;
 }
 
 /* =========================
