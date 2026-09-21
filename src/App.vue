@@ -32,8 +32,8 @@ const cierresCaja = useLocalStorage('don_ramiro_cierres_caja', [])
 
 const listaBarberos = [
   { nombre: 'Don Ramiro', comision: 50 },
-  { nombre: 'Empleado 1', comision: 40 },
-  { nombre: 'Empleado 2', comision: 40 }
+  { nombre: 'David', comision: 40 },
+  { nombre: 'Raul', comision: 40 }
 ]
 
 const barberos = listaBarberos.map(b => b.nombre)
