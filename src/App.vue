@@ -32,8 +32,8 @@ const cierresCaja = useLocalStorage('don_ramiro_cierres_caja', [])
 
 const listaBarberos = [
   { nombre: 'Don Ramiro', comision: 50 },
-  { nombre: 'Juan', comision: 40 },
-  { nombre: 'David', comision: 40 }
+  { nombre: 'David', comision: 40 },
+  { nombre: 'Raul', comision: 40 }
 ]
 
 const barberos = listaBarberos.map(b => b.nombre)
@@ -62,8 +62,19 @@ const calificacionAbierta = ref({})
 
 // Búsqueda y orden
 const busquedaCliente = ref('')
+const busquedaArchivados = ref('')
+const mostrarArchivados = ref(false)
 const criterioOrden = ref('fecha-desc')
 const ordenPor = ref('fecha')
+
+function abrirArchivados() {
+  busquedaArchivados.value = ''
+  mostrarArchivados.value = true
+}
+
+function cerrarArchivados() {
+  mostrarArchivados.value = false
+}
 
 // Fidelidad
 const alertaFrecuenteVisible = ref(false)
@@ -513,6 +524,37 @@ function obtenerClaseTurno(hora) {
 
 const serviciosVisibles = computed(() => obtenerServiciosFiltrados())
 const hayServiciosVisibles = computed(() => serviciosVisibles.value.length > 0)
+
+// Servicios archivados después de cerrar la caja.
+// Se mantienen guardados para poder consultarlos en cualquier momento.
+const serviciosArchivados = computed(() => {
+  const busqueda = String(busquedaArchivados.value || '').trim().toLowerCase()
+
+  return servicios.value
+    .filter(s => s.archivado === true)
+    .filter(s => {
+      if (!busqueda) return true
+
+      return (
+        String(s.cliente || '').toLowerCase().includes(busqueda) ||
+        String(s.barbero || '').toLowerCase().includes(busqueda) ||
+        listaServicios(s).toLowerCase().includes(busqueda)
+      )
+    })
+    .sort((a, b) => {
+      const fechaA = `${a.fecha || ''} ${a.hora || ''}`
+      const fechaB = `${b.fecha || ''} ${b.hora || ''}`
+      return fechaB.localeCompare(fechaA)
+    })
+})
+
+const totalServiciosArchivados = computed(() =>
+  servicios.value.filter(s => s.archivado === true).length
+)
+
+const hayServiciosArchivados = computed(() =>
+  serviciosArchivados.value.length > 0
+)
 
 const gruposPorTurno = computed(() => {
   const grupos = {
@@ -1246,7 +1288,7 @@ function cerrarModalCaja() {
 function cerrarCajaYArchivar() {
   const delDia = obtenerServiciosDelDia()
 
-  // Se calculan antes de archivar para no perder las comisiones del día.
+  // Primero se calcula la caja para conservar los valores del día.
   const resumen = calcularCajaDelDia()
 
   const comisiones = listaBarberos.map(b => ({
@@ -1255,13 +1297,21 @@ function cerrarCajaYArchivar() {
     valor: calcularComisionBarbero(b.nombre)
   }))
 
-  delDia.forEach(servicio => {
-    const idx = servicios.value.findIndex(
-      s => s.id === servicio.id
+  // Al cerrar la caja, todos los servicios del día quedan archivados.
+  // Los servicios archivados dejan de aparecer en la lista principal.
+  const fechaCierre = new Date().toISOString()
+
+  servicios.value = servicios.value.map(servicio => {
+    const perteneceAlCierre = delDia.some(
+      item => item.id === servicio.id
     )
 
-    if (idx !== -1) {
-      servicios.value[idx].archivado = true
+    if (!perteneceAlCierre) return servicio
+
+    return {
+      ...servicio,
+      archivado: true,
+      fechaArchivado: fechaCierre
     }
   })
 
@@ -1269,9 +1319,13 @@ function cerrarCajaYArchivar() {
     id: Date.now(),
     fecha: obtenerFechaHoyLocal(),
     ...resumen,
+    serviciosArchivados: delDia.length,
     comisiones
   })
 
+  // Los servicios de hoy quedan guardados como archivados.
+  // No se muestran automáticamente: se consultan desde el botón
+  // 'Ver servicios archivados'.
   cerrarModalCaja()
 }
 
@@ -1334,7 +1388,8 @@ async function cerrarCaja() {
     html: `
       <div style="text-align:left;line-height:1.7">
         <strong>Resumen del día</strong><br><br>
-        Servicios: ${serviciosHoy.length}<br>
+        Servicios procesados: ${serviciosHoy.length}<br>
+        Servicios archivados: ${serviciosHoy.length}<br>
         Efectivo: $${Number(resumen.efectivo).toLocaleString('es-CO')}<br>
         Transferencia: $${Number(resumen.transferencia).toLocaleString('es-CO')}<br>
         Tarjeta: $${Number(resumen.tarjeta).toLocaleString('es-CO')}<br>
@@ -1624,6 +1679,16 @@ const errorFormulario = computed(() => {
           @click="abrirCatalogo"
         >
           Gestionar servicios
+        </button>
+
+        <button
+          class="boton-secundario boton-archivados"
+          @click="mostrarArchivados ? cerrarArchivados() : abrirArchivados()"
+        >
+          {{ mostrarArchivados ? 'Ocultar archivados' : 'Ver servicios archivados' }}
+          <span v-if="totalServiciosArchivados > 0" class="contador-archivados">
+            {{ totalServiciosArchivados }}
+          </span>
         </button>
 
         <button
@@ -2246,6 +2311,153 @@ const errorFormulario = computed(() => {
             </article>
 
           </div>
+
+        </div>
+
+      </section>
+
+      <!-- =========================
+           SERVICIOS ARCHIVADOS
+      ========================== -->
+      <section
+        v-if="mostrarArchivados"
+        class="panel-archivados"
+      >
+
+        <div class="encabezado-archivados">
+          <div>
+            <h2 class="titulo-seccion">
+              SERVICIOS ARCHIVADOS
+            </h2>
+            <p class="descripcion-archivados">
+              Servicios guardados después del cierre de caja. Puedes consultarlos cuando quieras.
+            </p>
+          </div>
+
+          <span class="contador-total-archivados">
+            {{ totalServiciosArchivados }} archivados
+          </span>
+        </div>
+
+        <div class="buscador-archivados">
+          <input
+            v-model="busquedaArchivados"
+            type="text"
+            placeholder="Buscar por cliente, barbero o servicio..."
+          />
+        </div>
+
+        <div
+          v-if="!hayServiciosArchivados"
+          class="vacio archivados-vacio"
+        >
+          <p>
+            No hay servicios archivados para mostrar.
+          </p>
+        </div>
+
+        <div
+          v-else
+          class="lista-archivados"
+        >
+
+          <article
+            v-for="servicio in serviciosArchivados"
+            :key="`archivado-${servicio.id}`"
+            class="tarjeta tarjeta-archivada"
+          >
+
+            <div class="tarjeta-top">
+              <div>
+                <h3>{{ servicio.cliente }}</h3>
+                <span class="etiqueta-archivado">Archivado</span>
+              </div>
+
+              <strong class="precio">
+                ${{ totalServicio(servicio).toLocaleString('es-CO') }}
+              </strong>
+            </div>
+
+            <p class="linea">
+              <strong>Servicios:</strong>
+              <span>{{ listaServicios(servicio) }}</span>
+            </p>
+
+            <p class="linea">
+              <strong>Barbero:</strong>
+              <span>{{ servicio.barbero }}</span>
+            </p>
+
+            <p class="linea">
+              <strong>Fecha:</strong>
+              <span>{{ servicio.fecha }} · {{ servicio.hora }}</span>
+            </p>
+
+            <p class="linea">
+              <strong>Pago:</strong>
+              <span>{{ servicio.metodoPago }}</span>
+            </p>
+
+            <p class="linea">
+              <strong>Estado:</strong>
+              <span
+                :class="[
+                  'estado',
+                  obtenerEstadoServicio(servicio) === 'Pagado'
+                    ? 'ok'
+                    : obtenerEstadoServicio(servicio) === 'Pendiente'
+                      ? 'pendiente'
+                      : 'abonado'
+                ]"
+              >
+                {{ obtenerEstadoServicio(servicio) }}
+              </span>
+            </p>
+
+            <div class="resumen-pago">
+              <div class="resumen-pago-item">
+                <span>Cliente abonó</span>
+                <strong>
+                  ${{ Number(servicio.abono || 0).toLocaleString('es-CO') }}
+                </strong>
+              </div>
+
+              <div class="resumen-pago-item restante">
+                <span>Restante</span>
+                <strong>
+                  ${{ calcularSaldoRegistro(servicio).toLocaleString('es-CO') }}
+                </strong>
+              </div>
+            </div>
+
+            <p class="linea">
+              <strong>Calificación:</strong>
+              <span
+                v-if="servicio.calificado === true"
+                class="estrellas"
+              >
+                {{ generarEstrellas(servicio.calificacion) }}
+              </span>
+              <span v-else class="texto-pendiente">
+                Sin calificación
+              </span>
+            </p>
+
+            <p
+              v-if="servicio.observacionesFinales || servicio.observaciones"
+              class="observacion archivada-observacion"
+            >
+              {{ servicio.observacionesFinales || servicio.observaciones }}
+            </p>
+
+            <p
+              v-if="servicio.fechaArchivado"
+              class="fecha-archivo"
+            >
+              Cerrado y archivado: {{ new Date(servicio.fechaArchivado).toLocaleString('es-CO') }}
+            </p>
+
+          </article>
 
         </div>
 
@@ -3280,6 +3492,127 @@ const errorFormulario = computed(() => {
 }
 
 /* =========================
+   SERVICIOS ARCHIVADOS
+========================= */
+
+.boton-archivados {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.contador-archivados {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 20px;
+  background: #fff;
+  color: #2f9e44;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.panel-archivados {
+  margin-top: 24px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.encabezado-archivados {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 16px;
+}
+
+.descripcion-archivados {
+  margin: -4px 0 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.contador-total-archivados {
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #edf8ef;
+  color: #28783e;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.buscador-archivados {
+  margin-bottom: 16px;
+}
+
+.buscador-archivados input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid #d5d5d5;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.buscador-archivados input:focus {
+  outline: none;
+  border-color: #31af5b;
+  box-shadow: 0 0 0 3px rgba(49, 175, 91, 0.12);
+}
+
+.lista-archivados {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tarjeta-archivada {
+  position: relative;
+  background: #f4f3ea;
+  border-color: #c9c7af;
+}
+
+.etiqueta-archivado {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: #e3f2e6;
+  color: #2f6b3a;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fecha-archivo {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  color: #777;
+  font-size: 11px;
+}
+
+.archivada-observacion {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.archivados-vacio {
+  margin-top: 10px;
+}
+
+/* =========================
    ORDEN Y TURNOS
 ========================= */
 
@@ -3719,162 +4052,213 @@ const errorFormulario = computed(() => {
 }
 
 /* =========================
-   MODAL
+   MODAL - NUEVO SERVICIO
 ========================= */
 
 .modal-fondo {
   position: fixed;
-
   inset: 0;
-
-  background:
-    rgba(0, 0, 0, 0.5);
-
+  z-index: 100;
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  padding: 16px;
-
-  z-index: 100;
+  padding: 20px;
+  background: rgba(20, 24, 20, 0.68);
+  backdrop-filter: blur(4px);
 }
 
 .modal {
   width: 100%;
-
-  max-width: 750px;
-
-  max-height: 105vh;
-
+  max-width: 720px;
+  max-height: 94vh;
   overflow-y: auto;
-
   background: #fff;
-
-  border-radius: 15px;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: aparecerModal 0.2s ease;
 }
 
 .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
-
-  justify-content: space-between;
-
   align-items: center;
-
-  padding:
-    14px
-    16px;
-
-  border-bottom:
-    1px
-    solid
-    #eee;
+  justify-content: space-between;
+  padding: 18px 22px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 15px;
+  color: #222;
+  font-size: 22px;
+  font-weight: 700;
 }
 
 .cerrar {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-
-  background: none;
-
-  font-size: 18px;
-
+  border-radius: 50%;
+  background: transparent;
+  color: #333;
+  font-size: 28px;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.cerrar:hover {
+  background: #f1f1f1;
+  color: #31af5b;
+  transform: rotate(90deg);
 }
 
 .formulario {
-  padding: 16px;
-
+  padding: 22px;
   display: flex;
-
   flex-direction: column;
-
-  gap: 12px;
-}
-
-.fila {
-  display: grid;
-
-  grid-template-columns:
-    1fr
-    1fr;
-
-  gap: 10px;
+  gap: 18px;
 }
 
 .campo {
   display: flex;
-
   flex-direction: column;
-
-  gap: 4px;
+  gap: 7px;
 }
 
-.campo label {
+.campo > label {
+  color: #333;
   font-size: 12px;
-
-  font-weight: bold;
-
-  color: #444;
+  font-weight: 800;
+  letter-spacing: 0.6px;
 }
 
 .campo input,
 .campo select,
 .campo textarea {
-  border: none;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #d7d7d7;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
 
-  border-bottom:
-    1px
-    solid
-    #ccc;
-
-  padding:
-    6px
-    2px;
-
-  font-size: 13px;
-
-  background: transparent;
+.campo input:hover,
+.campo select:hover,
+.campo textarea:hover {
+  border-color: #a9a9a9;
 }
 
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
   outline: none;
-
-  border-bottom-color:
-    #333;
+  border-color: #31af5b;
+  box-shadow: 0 0 0 3px rgba(49, 175, 91, 0.12);
 }
 
 .campo textarea {
-  height: 55px;
-
+  min-height: 80px;
   resize: vertical;
 }
 
-.precio-formateado {
-  font-size: 13px;
-
-  color: #555;
-
-  width: 100%;
+.ayuda-servicios {
+  margin: -2px 0 2px;
+  color: #777;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.ayuda-servicios {
+/* =========================
+   SERVICIOS
+========================= */
+
+.grupo-servicios {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: #f7f8f7;
+  border: 1px solid #e5e7e5;
+  border-radius: 12px;
+}
+
+.subtitulo-servicios {
+  margin: 0 0 10px;
+  color: #6d5037;
   font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
 
-  color: #888;
+.opcion-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  margin: 2px 0;
+  border-radius: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
 
-  margin:
-    0
-    0
-    4px;
+.opcion-check:hover {
+  background: #eaf7ed;
+  color: #21763b;
+}
 
-  font-weight: normal;
+.opcion-check input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #31af5b;
+  cursor: pointer;
+}
+
+.opcion-check.deshabilitada {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.opcion-check.deshabilitada:hover {
+  background: transparent;
+  color: #333;
+}
+
+.opcion-check input:disabled {
+  cursor: not-allowed;
+}
+
+.etiqueta-incluido {
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 20px;
+  background: #fff3cd;
+  color: #8a6510;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* =========================
+   FILAS
+========================= */
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
 /* =========================
@@ -3883,127 +4267,121 @@ const errorFormulario = computed(() => {
 
 .input-con-simbolo {
   display: flex;
-
   align-items: center;
-
-  border-bottom:
-    1px
-    solid
-    #ccc;
-
-  padding:
-    6px
-    2px;
+  min-height: 42px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid #d7d7d7;
+  border-radius: 9px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input-con-simbolo:focus-within {
-  border-bottom-color:
-    #333;
+  border-color: #31af5b;
+  box-shadow: 0 0 0 3px rgba(49, 175, 91, 0.12);
 }
 
 .input-con-simbolo .simbolo {
-  font-size: 13px;
-
-  color: #444;
-
-  margin-right: 4px;
+  margin-right: 7px;
+  color: #777;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .input-con-simbolo input {
-  border: none !important;
-
+  min-height: auto !important;
   padding: 0 !important;
-
-  width: 100%;
-
-  background: transparent;
-}
-
-.input-con-simbolo input:focus {
-  outline: none;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .precio-bloqueado {
-  background: #f2f2f2;
-
-  border-radius: 5px;
+  background: #f3f4f3;
+  border-color: #dedede;
 }
 
 .precio-bloqueado input {
   cursor: not-allowed;
-
   color: #555;
 }
 
+.precio-formateado {
+  width: 100%;
+  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.saldo-abono {
+  margin-top: 3px;
+  color: #a05a00;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.texto-error-campo {
+  color: #c62828;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 /* =========================
-   CHECKBOX
+   FOTOS
 ========================= */
 
-.grupo-servicios {
-  background: #f7f7f7;
-
-  border-radius: 10px;
-
-  padding:
-    8px
-    10px;
-
-  margin-top: 6px;
+.campo input[type="file"] {
+  min-height: 42px;
+  padding: 8px;
+  background: #fafafa;
+  cursor: pointer;
 }
 
-.subtitulo-servicios {
-  margin:
-    0
-    0
-    6px;
-
-  font-size: 11px;
-
-  color: #7e5a3d;
-
-  letter-spacing: 1px;
+.campo input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 7px;
+  background: #e8f5eb;
+  color: #24753a;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.opcion-check {
+.campo input[type="file"]::file-selector-button:hover {
+  background: #d7efdc;
+}
+
+.foto-item {
   display: flex;
-
   align-items: center;
-
-  gap: 6px;
-
-  font-size: 13px;
-
-  font-weight: normal;
-
-  color: #333;
-
-  padding:
-    3px
-    0;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px;
+  background: #f7f7f7;
+  border-radius: 10px;
 }
 
-.opcion-check input {
-  width: auto;
+.foto-preview {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 9px;
+  border: 2px solid #ddd;
 }
 
-.opcion-check.deshabilitada {
-  color: #999;
-
-  opacity: 0.6;
+.boton-quitar-foto {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 7px;
+  background: #f3dddd;
+  color: #a03a3a;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.opcion-check input:disabled {
-  cursor: not-allowed;
-}
-
-.etiqueta-incluido {
-  font-size: 10px;
-
-  color: #b8860b;
-
-  font-style: italic;
-
-  margin-left: 4px;
+.boton-quitar-foto:hover {
+  background: #eacaca;
 }
 
 /* =========================
@@ -4011,15 +4389,13 @@ const errorFormulario = computed(() => {
 ========================= */
 
 .mensaje-error {
-  background: #fbe6e6;
-
-  color: #8c3535;
-
-  padding: 8px;
-
-  border-radius: 4px;
-
+  padding: 11px 13px;
+  background: #fff0f0;
+  border: 1px solid #f0caca;
+  border-radius: 9px;
+  color: #b3261e;
   font-size: 12px;
+  font-weight: 600;
 }
 
 /* =========================
@@ -4027,52 +4403,106 @@ const errorFormulario = computed(() => {
 ========================= */
 
 .botones-formulario {
+  position: sticky;
+  bottom: -1px;
   display: grid;
-
-  grid-template-columns:
-    1fr
-    1fr;
-
-  gap: 10px;
-
-  margin-top: 4px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 3px;
+  padding-top: 14px;
+  background: #fff;
+  border-top: 1px solid #eeeeee;
 }
 
 .boton-cancelar,
 .boton-guardar {
-  padding: 9px;
-
-  border-radius: 15px;
-
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-
-  font-weight: bold;
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .boton-cancelar {
-  border:
-    1px
-    solid
-    #c9c9c9;
-
-  background: #eeeeee;
+  border: 1px solid #d2d2d2;
+  background: #f5f5f5;
   color: #444;
 }
 
 .boton-cancelar:hover {
-  background: #dddddd;
+  background: #e9e9e9;
 }
 
 .boton-guardar {
   border: none;
-
   background: #31af5b;
-
   color: #fff;
+  box-shadow: 0 4px 10px rgba(49, 175, 91, 0.2);
 }
 
 .boton-guardar:hover {
   background: #26964b;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(49, 175, 91, 0.3);
+}
+
+@keyframes aparecerModal {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-fondo {
+    padding: 8px;
+  }
+
+  .modal {
+    max-height: 96vh;
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    padding: 15px 16px;
+  }
+
+  .modal-header h2 {
+    font-size: 19px;
+  }
+
+  .formulario {
+    padding: 16px;
+    gap: 15px;
+  }
+
+  .fila {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .botones-formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .opcion-check {
+    font-size: 13px;
+  }
+
+  .lista-archivados {
+    grid-template-columns: 1fr;
+  }
+
+  .encabezado-archivados {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 /* =========================
